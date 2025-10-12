@@ -13,6 +13,12 @@ Test för att verifiera det fullständiga systemflödet mellan ALLA moduler:
 - symbol_memory: Lagrar symbolspecifik historik
 - narrative_engine: Bygger systemberättelse
 - mutation_tracker: Spårar strategimutationer
+- synergy_matrix: Analyserar agentsamverkan och konflikter
+- agent_spectrum: Hanterar ontologisk agentförflyttning
+- agent_lifecycle: Hanterar agentens livscykel
+- metaagentgovernor: Överordnad styrning av agenter
+- portfolio_comparator: Jämför portföljer
+- risk_mapper: Riskmatris och symbolrisk
 
 Detta test simulerar ett komplett tradingflöde från datahämtning till portföljoptimering.
 """
@@ -31,6 +37,12 @@ from modules.self_critique import SelfCritique
 from modules.symbol_memory import SymbolMemory
 from modules.narrative_engine import NarrativeEngine
 from modules.mutation_tracker import MutationTracker
+from modules.synergy_matrix import SynergyMatrix
+from modules.agent_spectrum import AgentSpectrum
+from modules.agent_lifecycle import AgentLifecycle
+from modules.metaagentgovernor import MetaAgentGovernor
+from modules.portfolio_comparator import PortfolioComparator
+from modules.risk_mapper import RiskMapper
 
 
 # Konfigurera logging
@@ -103,7 +115,26 @@ def test_system_flow():
     mutation_tracker = MutationTracker()
     print("✓ MutationTracker initialiserad")
     
-    print(f"\n✓ Alla 13 moduler initialiserade framgångsrikt!")
+    # Nya moduler
+    synergy_matrix = SynergyMatrix()
+    print("✓ SynergyMatrix initialiserad")
+    
+    agent_spectrum = AgentSpectrum()
+    print("✓ AgentSpectrum initialiserad")
+    
+    agent_lifecycle = AgentLifecycle(retirement_threshold=0.3, max_age=1000)
+    print("✓ AgentLifecycle initialiserad")
+    
+    meta_governor = MetaAgentGovernor(max_active_agents=10)
+    print("✓ MetaAgentGovernor initialiserad")
+    
+    portfolio_comparator = PortfolioComparator()
+    print("✓ PortfolioComparator initialiserad")
+    
+    risk_mapper = RiskMapper(max_portfolio_risk=0.20)
+    print("✓ RiskMapper initialiserad")
+    
+    print(f"\n✓ Alla 19 moduler initialiserade framgångsrikt!")
     
     # ========================================================================
     # STEG 2: HÄMTA OCH ANALYSERA MARKNADSDATA
@@ -527,9 +558,154 @@ def test_system_flow():
         print(f"    {line}")
     
     # ========================================================================
-    # STEG 14: SLUTSTATISTIK FRÅN ALLA MODULER
+    # STEG 14: AGENT LIFECYCLE OCH SYNERGY MATRIX
     # ========================================================================
-    print("\n--- STEG 14: Slutstatistik från alla moduler ---")
+    print("\n--- STEG 14: Agent lifecycle och synergy matrix ---")
+    
+    # Skapa agenter med agent lifecycle
+    agent_types = [
+        ('momentum_agent', 'momentum'),
+        ('reversal_agent', 'reversal'),
+        ('breakout_agent', 'breakout'),
+        ('hybrid_agent', 'hybrid')
+    ]
+    
+    print("\n  Skapar och aktiverar agenter:")
+    for agent_id, agent_type in agent_types:
+        agent_lifecycle.birth_agent(agent_id, agent_type, {'lookback': 20})
+        agent_lifecycle.activate_agent(agent_id)
+        print(f"    ✓ {agent_id}: skapad och aktiverad")
+    
+    # Placera agenter i spektrum
+    print("\n  Placerar agenter i ontologiskt spektrum:")
+    import random
+    for agent_id, _ in agent_types:
+        position = [random.uniform(0.2, 0.8) for _ in range(5)]
+        agent_spectrum.place_agent(agent_id, position)
+        profile = agent_spectrum.get_agent_profile(agent_id)
+        print(f"    ✓ {agent_id}: placerad, mobility={profile['mobility_score']:.3f}")
+    
+    # Registrera interaktioner i synergy matrix
+    print("\n  Registrerar agentinteraktioner:")
+    for i, (agent1_id, _) in enumerate(agent_types):
+        for agent2_id, _ in agent_types[i+1:]:
+            # Simulera interaktion
+            outcome = random.uniform(-0.5, 0.8)
+            interaction_type = 'agreement' if outcome > 0 else 'conflict'
+            synergy_matrix.record_interaction(agent1_id, agent2_id, interaction_type, outcome)
+    
+    synergy = synergy_matrix.get_synergy('momentum_agent', 'breakout_agent')
+    print(f"    Synergy momentum-breakout: {synergy:.3f}")
+    
+    # Hitta bästa partners
+    best_partners = synergy_matrix.get_best_partners('momentum_agent', 2)
+    if best_partners:
+        print(f"    Bästa partners för momentum_agent: {best_partners[0][0]} (score={best_partners[0][1]:.3f})")
+    
+    # ========================================================================
+    # STEG 15: META GOVERNOR OCH PRIORITERING
+    # ========================================================================
+    print("\n--- STEG 15: Meta governor och agentprioriter ing ---")
+    
+    # Sätt prioriteringar
+    print("\n  Sätter agentprioriteringar:")
+    for agent_id, _ in agent_types:
+        priority = random.uniform(0.4, 0.9)
+        meta_governor.set_priority(agent_id, priority)
+        meta_governor.allocate_resources(agent_id, 0.2)
+    
+    # Ombalansera baserat på performance
+    performance_data = {agent_id: random.uniform(0.5, 0.9) for agent_id, _ in agent_types}
+    new_priorities = meta_governor.rebalance_priorities(performance_data)
+    print(f"    ✓ Ombalanserade {len(new_priorities)} agentprioriteringar")
+    
+    # Testa konfliktlösning
+    conflict_resolution = meta_governor.resolve_conflict(
+        ['momentum_agent', 'reversal_agent'],
+        {'reason': 'opposing_signals'}
+    )
+    print(f"    Konfliktlösning: vinnare={conflict_resolution['winner']}")
+    
+    # Enforce limits
+    enforcement = meta_governor.enforce_limits()
+    print(f"    Resurser inom gränser: {enforcement['within_limits']}")
+    
+    # ========================================================================
+    # STEG 16: RISK MAPPING OCH PORTFOLIOJÄMFÖRELSE
+    # ========================================================================
+    print("\n--- STEG 16: Risk mapping och portföljjämförelse ---")
+    
+    # Beräkna risk för symboler
+    print("\n  Beräknar symbolrisk:")
+    for symbol in top_symbols[:3]:
+        volatility = random.uniform(0.10, 0.25)
+        position_size = 5000.0
+        risk_data = risk_mapper.calculate_symbol_risk(symbol, volatility, position_size)
+        print(f"    {symbol}: risk={risk_data['base_risk']:.4f}, level={risk_data['risk_level']}")
+    
+    # Sätt korrelationer
+    risk_mapper.set_correlation('AAPL', 'MSFT', 0.7)
+    risk_mapper.set_correlation('GOOGL', 'META', 0.65)
+    
+    # Beräkna portföljrisk
+    positions = {symbol: 5000.0 for symbol in top_symbols[:3]}
+    portfolio_risk = risk_mapper.calculate_portfolio_risk(positions)
+    print(f"\n    Portföljrisk: {portfolio_risk['total_risk']:.4f} ({portfolio_risk['risk_pct']:.2f}%)")
+    print(f"    Inom gränser: {portfolio_risk['within_limits']}")
+    
+    # Risk-adjusted sizing
+    adjusted = risk_mapper.suggest_risk_adjusted_size('TSLA', 10000.0, 100000.0)
+    print(f"    Risk-adjusted size för TSLA: ${adjusted['suggested_size']:.2f} (factor={adjusted.get('adjustment_factor', 1.0):.2f})")
+    
+    # Jämför portföljer
+    print("\n  Jämför portföljer:")
+    portfolio_comparator.add_portfolio('main_portfolio', {
+        'return': 0.15,
+        'risk': 0.12,
+        'sharpe': 1.25,
+        'win_rate': 0.62
+    })
+    portfolio_comparator.add_portfolio('aggressive_portfolio', {
+        'return': 0.22,
+        'risk': 0.18,
+        'sharpe': 1.22,
+        'win_rate': 0.58
+    })
+    
+    comparison = portfolio_comparator.compare_portfolios(['main_portfolio', 'aggressive_portfolio'])
+    print(f"    Vinnare: {comparison.get('overall_winner', 'N/A')}")
+    
+    # Lägg till benchmark
+    portfolio_comparator.add_benchmark('sp500', {'return': 0.10, 'risk': 0.15})
+    bench_comp = portfolio_comparator.compare_to_benchmark('main_portfolio', 'sp500')
+    print(f"    Alpha vs S&P500: {bench_comp['alpha']:.4f}")
+    
+    # ========================================================================
+    # STEG 17: AGENT SPECTRUM CLUSTERING
+    # ========================================================================
+    print("\n--- STEG 17: Agent spectrum clustering ---")
+    
+    # Flytta några agenter i spektrumet
+    agent_spectrum.move_agent('momentum_agent', 'risk_tolerance', 0.1)
+    agent_spectrum.move_agent('reversal_agent', 'adaptability', -0.15)
+    
+    # Hitta närmaste agenter
+    nearest = agent_spectrum.find_nearest_agents('momentum_agent', 2)
+    if nearest:
+        print(f"\n  Närmaste agenter till momentum_agent:")
+        for agent_id, distance in nearest:
+            print(f"    {agent_id}: distance={distance:.3f}")
+    
+    # Cluster agents
+    clusters = agent_spectrum.cluster_agents(max_distance=0.5)
+    print(f"\n  Skapade {len(clusters)} agent-clusters")
+    for i, cluster in enumerate(clusters):
+        print(f"    Cluster {i+1}: {len(cluster)} agenter")
+    
+    # ========================================================================
+    # STEG 18: SLUTSTATISTIK FRÅN ALLA MODULER
+    # ========================================================================
+    print("\n--- STEG 18: Slutstatistik från alla moduler ---")
     
     stats = {
         'DataStream': data_stream.get_stats() if hasattr(data_stream, 'get_stats') else {},
@@ -544,7 +720,13 @@ def test_system_flow():
         'SelfCritique': self_critique.get_stats(),
         'SymbolMemory': symbol_memory.get_stats(),
         'NarrativeEngine': narrative_engine.get_stats(),
-        'MutationTracker': mutation_tracker.get_stats()
+        'MutationTracker': mutation_tracker.get_stats(),
+        'SynergyMatrix': synergy_matrix.get_stats(),
+        'AgentSpectrum': agent_spectrum.get_stats(),
+        'AgentLifecycle': agent_lifecycle.get_stats(),
+        'MetaAgentGovernor': meta_governor.get_stats(),
+        'PortfolioComparator': portfolio_comparator.get_stats(),
+        'RiskMapper': risk_mapper.get_stats()
     }
     
     print("\n  Modulstatistik:")
@@ -559,7 +741,7 @@ def test_system_flow():
     print("\n" + "="*80)
     print("SYSTEMFLÖDESTEST SLUTFÖRT MED FRAMGÅNG! ✓")
     print("="*80)
-    print(f"\nAlla 13 moduler testade och integrerade:")
+    print(f"\nAlla 19 moduler testade och integrerade:")
     print(f"  • Marknadsdata inhämtad och analyserad")
     print(f"  • Agentbeslut samlade och konsensus analyserad")
     print(f"  • Signaler validerade över tidsramar")
@@ -571,6 +753,12 @@ def test_system_flow():
     print(f"  • RL-modeller tränade för tidsramar")
     print(f"  • Mutationer spårade och analyserade")
     print(f"  • Systemberättelse och kausal analys byggd")
+    print(f"  • Agentsynergi och konflikter analyserade")
+    print(f"  • Ontologisk agentförflyttning spårad")
+    print(f"  • Agentlivscykel hanterad")
+    print(f"  • Meta-governance och prioritering genomförd")
+    print(f"  • Portföljer jämförda och benchmarkade")
+    print(f"  • Risk mappning och justering utförd")
     print("\n" + "="*80 + "\n")
     
     return True
