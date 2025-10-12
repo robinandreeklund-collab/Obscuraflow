@@ -26,6 +26,10 @@ class DataStream:
         symbols (List[str]): Lista över symboler att övervaka
         websocket_url (str): URL för WebSocket-anslutning
         rest_url (str): URL för REST API
+        use_mock_data (bool): Om True används mockdata istället för riktig API-data, vilket påverkar klassens metoder och beteende.
+    
+    Not:
+        use_mock_data-parametern styr om DataStream använder mockdata eller ansluter till riktiga API:er. Detta påverkar hur data hämtas och hanteras i klassens metoder.
     """
     
     def __init__(self, api_key: str, symbols: Optional[List[str]] = None, use_mock_data: bool = False):
