@@ -994,12 +994,13 @@ pip install -r requirements.txt
 
 ### 2. Konfigurera Finnhub API (Valfritt)
 
-För att använda live marknadsdata behöver du en Finnhub API-nyckel:
+Projektet kommer med en förkonfigurerad Finnhub API-nyckel i `config.py`. För att använda din egen API-nyckel:
 
 1. Registrera dig gratis på [Finnhub.io](https://finnhub.io/register)
 2. Kopiera din API-nyckel från dashboarden
-3. Sätt API-nyckeln som en miljövariabel:
+3. Välj ett av följande alternativ:
 
+#### Alternativ A: Miljövariabel (Rekommenderat för säkerhet)
 ```bash
 # Linux/Mac
 export FINNHUB_API_KEY="din_api_nyckel_här"
@@ -1011,7 +1012,17 @@ $env:FINNHUB_API_KEY="din_api_nyckel_här"
 set FINNHUB_API_KEY=din_api_nyckel_här
 ```
 
-**Notera:** Om ingen API-nyckel sätts kommer dashboarden automatiskt att använda simulerad data (mock mode).
+#### Alternativ B: Direkt i config.py
+Redigera filen `config.py` i projektets rot och ändra:
+```python
+FINNHUB_API_KEY = "din_api_nyckel_här"
+```
+
+**Notera:** 
+- Projektet inkluderar en fungerande API-nyckel som standard
+- Om ingen miljövariabel sätts används nyckeln från config.py
+- För mock data behövs ingen API-nyckel
+- Växla datakälla med togglen i dashboarden
 
 ### 3. Starta Dashboarden
 
