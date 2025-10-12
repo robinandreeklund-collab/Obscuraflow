@@ -10,7 +10,8 @@ import plotly.graph_objs as go
 from datetime import datetime, timedelta
 import random
 import sys
-sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
 def create_panel():
     """
