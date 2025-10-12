@@ -3,8 +3,10 @@ Dashboard Configuration
 Centralized configuration for API keys and data sources
 """
 
+import os
 # Finnhub API Configuration
-FINNHUB_API_KEY = "d3in10hr01qmn7fkr2a0d3in10hr01qmn7fkr2ag"
+# Load API key from environment variable for security
+FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY")
 
 # Data Source Toggle
 # Set to False to use real Finnhub API data, True for mock data
