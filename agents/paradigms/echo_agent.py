@@ -126,7 +126,7 @@ class EchoAgent(BaseAgent):
                 'symbol': symbol,
                 'decision': DecisionType.HOLD.value,
                 'confidence': 0.5,
-                'reasoning': 'Inga matchande historiska mönster hittades',
+                'reasoning': 'No matching historical patterns found',
                 'metrics': {
                     'matches_found': 0,
                     'pattern_database_size': len(self.pattern_database)
