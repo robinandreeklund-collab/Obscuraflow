@@ -43,7 +43,7 @@ def test_agent_layer():
     
     assert stats['total_agent_types'] == 16, "Förväntar 16 agenttyper"
     assert stats['classic_agents'] == 4, "Förväntar 4 klassiska agenter"
-    assert stats['paradigmatic_agents'] == 12, "Förväntar 12 paradigmatiska agenter"
+    assert stats['paradigmatic_agents'] == 12, "Expected 12 paradigmatic agents"
     
     # ========================================================================
     # STEG 2: LISTA ALLA AGENTER
