@@ -28,6 +28,7 @@ Obscuraflow är ett avancerat, modulärt och självlärande AI-tradingekosystem 
 | metaagentgovernor    | Klar             | Full implementation & test    |
 | portfolio_comparator | Klar             | Full implementation & test    |
 | risk_mapper          | Klar             | Full implementation & test    |
+| **agents/**          | **Klar**         | **Agentlager komplett**       |
 
 ---
 
@@ -76,6 +77,40 @@ Att skapa ett transparent, introspektivt och evolverande tradingekosystem där v
 - Klassiska agenter: Momentum, Reversal, Breakout, Hybrid
 - Paradigmatiska agenter: Echo, Fractalis, Vox, Myco, Obscura, Mirage, Sentio, Reflexion, Dimensio, Symbio, Genesis, Architectum
 - Hybrider & meta-agenter: Kombinerade och självlärande agentstrukturer
+
+---
+
+## 🎯 Agentlager - Status: Klar
+
+**Implementerat:** Samtliga 16 agenter enligt specifikation
+
+### Klassiska Agenter (4)
+✅ **MomentumAgent** - Trendföljande, kort spanpreferens (<5 min)  
+✅ **ReversalAgent** - Mean reversion, medellång span (5-30 min)  
+✅ **BreakoutAgent** - Volatility breakout, lång span (>30 min)  
+✅ **HybridAgent** - Multi-strategi, adaptiv span
+
+### Paradigmatiska Agenter (12)
+✅ **EchoAgent** - Temporal/Reflective dimension, mönsterreplikering  
+✅ **FractalisAgent** - Spatial-Temporal/Complex, fraktalanalys  
+✅ **VoxAgent** - Social/Collective, konsensusbyggande  
+✅ **MycoAgent** - Network/Distributed, informationsspridning  
+✅ **ObscuraAgent** - Latent/Obscure, dolda mönster  
+✅ **MirageAgent** - Perceptual/Discriminative, signalfiltrering  
+✅ **SentioAgent** - Emotional/Empathic, sentimentanalys  
+✅ **ReflexionAgent** - Meta-Cognitive/Reflective, självlärande  
+✅ **DimensioAgent** - Hyper-Spatial/Analytical, 5D analys  
+✅ **SymbioAgent** - Relational/Cooperative, agentsamverkan  
+✅ **GenesisAgent** - Origination/Generative, trendstarter  
+✅ **ArchitectumAgent** - Structural/Constructive, strukturanalys
+
+### Agent Registry
+✅ **agent_registry.py** - Centralt register med metadata för alla agenter
+
+### Framtida Utveckling
+- **Hybrider**: Agentkombinationer som kombinerar flera strategier
+- **Span Hybrids**: Tidsram-adaptiva agenter
+- **Meta Agents**: Självlärande agentråd och överordnad styrning
 
 ---
 
@@ -898,6 +933,45 @@ Kopplingar:
 - narrative_engine skapar berättelse om beslut och händelser
 - system_flow visualiserar modulflöde
 - → båda används för transparens, introspektion och RL-belöning
+
+---
+
+## 📈 Projektstatus - December 2025
+
+### ✅ Färdigställt
+
+**Moduler (19/19)**
+- Alla 19 kärnmoduler implementerade och testade
+- Full integration mellan moduler
+- Komplett systemflöde från data till exekvering
+
+**Agentlager (16/16)**
+- 4 klassiska agenter: Momentum, Reversal, Breakout, Hybrid
+- 12 paradigmatiska agenter: Echo, Fractalis, Vox, Myco, Obscura, Mirage, Sentio, Reflexion, Dimensio, Symbio, Genesis, Architectum
+- Agent Registry för central hantering
+- Basklasser och gemensamt gränssnitt
+
+**Testning**
+- Systemflödestest över alla moduler
+- Integrationstest för agenter och moduler
+- Mockdata för utveckling utan externa API:er
+
+### 🚧 Pågående / Planerat
+
+**Dash-gränssnitt**
+- 13 Dash-paneler för visualisering
+- UI-komponenter och interaktivitet
+- Real-time uppdateringar
+
+**Hybrider & Meta-Agenter**
+- Agentkombinationer och hybrid-strategier
+- Tidsram-adaptiva span_hybrids
+- Meta-agenter för överordnad styrning
+
+**Live Trading**
+- Finnhub API integration för live-data
+- Exekveringsmotor för reala trades
+- Risk management och positionshantering
 
 ---
 
