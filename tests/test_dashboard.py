@@ -4,7 +4,8 @@ Verifierar att dashboarden kan startas och alla paneler är tillgängliga.
 """
 
 import sys
-sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def test_dashboard_import():
     """Test att appen kan importeras"""
