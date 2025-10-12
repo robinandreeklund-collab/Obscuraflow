@@ -194,7 +194,11 @@ class AgentSpectrum:
             
             clusters.append(cluster)
         
-        logger.info(f"Skapade {len(clusters)} clusters (avg size: {sum(len(c) for c in clusters)/len(clusters):.1f})")
+        if clusters:
+            avg_size = sum(len(c) for c in clusters) / len(clusters)
+        else:
+            avg_size = 0.0
+        logger.info(f"Skapade {len(clusters)} clusters (avg size: {avg_size:.1f})")
         return clusters
     
     def get_agent_profile(self, agent_id: str) -> Optional[Dict[str, Any]]:
