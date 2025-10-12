@@ -757,3 +757,119 @@ Kopplingar:
                             │     SYSTEM FLOW MAP        │
                             │  Visuell modulöversikt     │
                             └────────────────────────────┘
+
+
+---
+
+🔁 Obscuraflow – Flödesschema (Textformat)
+
+---
+
+1. 📡 Dataflöde
+
+- data_stream hämtar realtidsdata via WebSocket och REST
+- → skickar till trending_pool för symbolranking
+- → topprankade symboler skickas till agentlagret
+
+---
+
+2. 🤖 Agentanalys
+
+- 17 agenter i agents/ analyserar symboler parallellt
+- → varje agent genererar ett beslut (buy/sell/hold + confidence)
+- → beslut skickas till fusion för multi-span validering
+
+---
+
+3. 🧠 Beslutsmotor
+
+- decision_core samlar alla agentbeslut
+- → loggar och skickar vidare till:
+  - vote_engine om konflikt
+  - sizing för positionstorlek
+  - execution_monitor för exekvering
+- ← tar emot feedback från:
+  - self_critique (felanalys)
+  - symbol_memory (historik)
+  - evolution (muterade agenter)
+  - metaagentgovernor (agentprioritering)
+  - risk_mapper (riskjustering)
+  - portfolio_comparator (bästa portföljer)
+
+---
+
+4. 🗳️ Röstning
+
+- vote_engine hanterar oenighet mellan agenter
+- → viktar röster och skickar beslut till decision_core
+- ← tar RL-feedback från self_critique
+
+---
+
+5. 📐 Position Sizing
+
+- sizing beräknar positionstorlek baserat på strategi, risk, sentiment
+- → skickar sizing till execution_monitor
+- ← påverkas av riskmapper, sentioagent, regimdata
+
+---
+
+6. ⚙️ Exekvering
+
+- execution_monitor kör trades (simulerat eller live)
+- → loggar resultat till symbol_memory
+
+---
+
+7. 🧠 Introspektion
+
+- self_critique analyserar beslut och identifierar fel
+- → skickar förbättringsförslag till evolution, decision_core
+- ← använder data från symbolmemory, executionmonitor
+
+---
+
+8. 🧬 Mutation
+
+- evolution muterar strategier, spans, agenter och portföljer
+- → skapar nya agenter via agent_lifecycle
+- → loggar mutationer i mutation_tracker
+- ← triggas av låg RL-belöning från self_critique
+
+---
+
+9. 🧭 Agentstruktur
+
+- agent_lifecycle spårar agentens livscykel
+- synergy_matrix analyserar samverkan och konflikt
+- agent_spectrum visualiserar ontologisk rörelse
+- metaagentgovernor skapar agentråd och prioriterar agenter
+- → alla påverkar agentbeteende och skickar tillbaka till decision_core
+
+---
+
+10. 📊 Portföljhantering
+
+- portfolio_engine kör och muterar portföljer
+- portfolio_comparator jämför och optimerar
+- → båda påverkar agentviktning och beslut
+- ← RL-feedback från performance
+
+---
+
+11. ⚠️ Riskanalys
+
+- risk_mapper beräknar risk per symbol, agent och portfölj
+- → påverkar sizing och beslut
+- ← använder data från portfolioengine, sizing, sentioagent
+
+---
+
+12. 📖 Narrativ & Visualisering
+
+- narrative_engine skapar berättelse om beslut och händelser
+- system_flow visualiserar modulflöde
+- → båda används för transparens, introspektion och RL-belöning
+
+---
+
