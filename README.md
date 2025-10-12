@@ -9,10 +9,10 @@ Obscuraflow är ett avancerat, modulärt och självlärande AI-tradingekosystem 
 
 | Modul                | Status           | Kommentar                    |
 |----------------------|------------------|------------------------------|
-| data_stream          | Under utveckling | Datainhämtning & trendanalys |
-| trending_pool        | Ej påbörjad      | Symbolranking                |
-| decision_core        | Ej påbörjad      | Beslutsmotor                 |
-| vote_engine          | Ej påbörjad      | Röstningssystem              |
+| data_stream          | Klar             | Datainhämtning & trendanalys |
+| trending_pool        | Klar             | Symbolranking                |
+| decision_core        | Klar             | Beslutsmotor                 |
+| vote_engine          | Klar             | Röstningssystem              |
 | fusion               | Ej påbörjad      | Signalvalidering             |
 | sizing               | Ej påbörjad      | Position sizing              |
 | timespan_engine      | Ej påbörjad      | Tidsramar & RL-träning       |
