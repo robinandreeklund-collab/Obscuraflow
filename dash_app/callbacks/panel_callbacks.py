@@ -70,7 +70,7 @@ def register_panel_callbacks(app):
         # Kontrollera om något interval faktiskt triggade
         # (annars är alla None och vi ska inte uppdatera)
         interval_values = args[:-2]  # Alla utom de två sista (States)
-        if all(v is None or v == 0 for v in interval_values):
+        if all(v is None for v in interval_values):
             raise PreventUpdate
         
         # Update configs
