@@ -72,7 +72,7 @@ class VoxAgent(BaseAgent):
         Returns:
             Dict med decision, confidence, reasoning
         """
-        # Om vi har andra agentbeslut, använd dem
+        # If we have other agent decisions, use them
         if self.other_agent_decisions:
             buy_votes = sum(1 for d in self.other_agent_decisions if d.get('decision') == 'buy')
             sell_votes = sum(1 for d in self.other_agent_decisions if d.get('decision') == 'sell')
