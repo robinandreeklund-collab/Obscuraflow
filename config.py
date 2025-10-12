@@ -50,7 +50,7 @@ DEFAULT_SYMBOLS = [
 # ============================================================================
 
 # Auto-refresh interval for panels (milliseconds)
-AUTO_REFRESH_INTERVAL = 5000
+AUTO_REFRESH_INTERVAL = 1000
 
 # Chart theme
 CHART_THEME = 'plotly_dark'
