@@ -5,6 +5,15 @@ Detta är huvudfilen för Obscuraflow Dash-dashboard.
 Den initierar Dash-appen, registrerar callbacks och startar servern.
 """
 
+import sys
+import os
+
+# Add project root to path if running from dash_app directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import dash
 from dash import Dash, html, dcc, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -63,4 +72,12 @@ def display_page(pathname):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0', port=8050)
+    print("=" * 80)
+    print("🌀 OBSCURAFLOW DASHBOARD")
+    print("=" * 80)
+    print("\nStartar Dash-servern...")
+    print("Dashboard tillgänglig på: http://localhost:8050")
+    print("\nTryck Ctrl+C för att stoppa servern.\n")
+    print("=" * 80)
+    
+    app.run(debug=True, host='0.0.0.0', port=8050)
