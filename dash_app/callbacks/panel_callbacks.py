@@ -3,7 +3,7 @@ Panel Auto-Update Callbacks
 Provides automatic real-time updates for all dashboard panels using a global refresh interval
 """
 
-from dash import Input, Output, State
+from dash import Input, Output, State, callback_context
 from dash.exceptions import PreventUpdate
 from dash_app.layout.page_router import route_page
 import dash_app.config as dash_config
@@ -14,6 +14,10 @@ def register_panel_callbacks(app):
     """
     Registrerar en global auto-refresh callback som uppdaterar alla paneler automatiskt.
     Använder panel-specifika intervals som redan finns i varje panel.
+    
+    Not: Dash visar console warnings när callbacks refererar till komponenter som inte finns
+    i den aktuella layouten. Detta är förväntat beteende och påverkar inte funktionaliteten.
+    Endast intervals som faktiskt finns i DOM kan trigga uppdateringar.
     """
     
     # Lista över alla panel intervals som kan trigga uppdateringar
@@ -51,8 +55,13 @@ def register_panel_callbacks(app):
     def auto_update_all_panels(*args):
         """
         Uppdaterar paneler automatiskt när något interval triggas.
-        Dash triggar endast när interval faktiskt finns i DOM.
+        Endast intervals som finns i aktuell layout kan faktiskt trigga denna callback.
         """
+        # Kontrollera att callback faktiskt triggades av en komponent
+        ctx = callback_context
+        if not ctx.triggered or ctx.triggered[0]['prop_id'] == '.':
+            raise PreventUpdate
+        
         # De sista två argumenten är States (pathname och data_source)
         pathname = args[-2]
         data_source = args[-1]
@@ -60,7 +69,7 @@ def register_panel_callbacks(app):
         # Kontrollera om något interval faktiskt triggade
         # (annars är alla None och vi ska inte uppdatera)
         interval_values = args[:-2]  # Alla utom de två sista (States)
-        if all(v is None for v in interval_values):
+        if all(v is None or v == 0 for v in interval_values):
             raise PreventUpdate
         
         # Update configs
