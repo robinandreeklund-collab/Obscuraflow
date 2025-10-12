@@ -80,16 +80,31 @@ class Evolution:
         if random.random() > self.mutation_rate:
             return None  # Ingen mutation denna gång
         
-        # Kodstub - implementeras senare med faktisk mutation
         parent = self.strategies[strategy_id]
         mutated_id = f"{strategy_id}_mut_{self.generation}"
         
+        # Mutera parametrar (kopiera och modifiera)
+        mutated_params = parent['parameters'].copy()
+        
+        # Applicera mutationer på parametrar
+        for key, value in mutated_params.items():
+            if isinstance(value, (int, float)):
+                # Numeriska värden: lägg till noise
+                mutation_strength = 0.1  # 10% mutation
+                noise = random.uniform(-mutation_strength, mutation_strength)
+                mutated_params[key] = value * (1 + noise)
+            elif isinstance(value, bool):
+                # Boolean: flip med viss sannolikhet
+                if random.random() < 0.2:
+                    mutated_params[key] = not value
+        
         mutated_strategy = {
             'id': mutated_id,
-            'parameters': parent['parameters'].copy(),  # I verkligheten muteras dessa
+            'parameters': mutated_params,
             'fitness': 0.0,
             'generation': self.generation,
             'parent': strategy_id,
+            'mutation_applied': True,
             'created_at': datetime.now().isoformat()
         }
         
@@ -123,13 +138,56 @@ class Evolution:
             Dict med evolutionsresultat
         """
         self.generation += 1
-        # Kodstub - implementeras senare med selektion och mutation
-        logger.info(f"Evolverade till generation {self.generation}")
-        return {
+        
+        # Hitta bästa strategierna från nuvarande generation
+        current_strategies = [s for s in self.strategies.values() 
+                            if s['generation'] == self.generation - 1]
+        
+        if not current_strategies:
+            logger.warning("Inga strategier att evolva från")
+            return {
+                'generation': self.generation,
+                'strategies': len(self.strategies),
+                'evolved': 0,
+                'timestamp': datetime.now().isoformat()
+            }
+        
+        # Sortera efter fitness
+        current_strategies.sort(key=lambda x: x['fitness'], reverse=True)
+        
+        # Välj top strategier för att föröka (top 50%)
+        survivors = current_strategies[:max(1, len(current_strategies) // 2)]
+        
+        # Mutera överlevare
+        mutations_created = 0
+        for strategy in survivors:
+            mutated = self.mutate_strategy(strategy['id'])
+            if mutated:
+                mutations_created += 1
+        
+        # Begränsa population size
+        if len(self.strategies) > self.population_size * 2:
+            # Ta bort sämsta strategierna
+            all_strats = sorted(self.strategies.values(), 
+                              key=lambda x: x['fitness'], reverse=True)
+            keep_ids = [s['id'] for s in all_strats[:self.population_size]]
+            self.strategies = {k: v for k, v in self.strategies.items() 
+                             if k in keep_ids}
+        
+        result = {
             'generation': self.generation,
             'strategies': len(self.strategies),
+            'survivors': len(survivors),
+            'mutations_created': mutations_created,
             'timestamp': datetime.now().isoformat()
         }
+        
+        logger.info(
+            f"Evolverade till generation {self.generation}: "
+            f"{len(survivors)} överlevare, {mutations_created} mutationer"
+        )
+        
+        return result
     
     def get_best_strategies(self, n: int = 3) -> List[Dict[str, Any]]:
         """

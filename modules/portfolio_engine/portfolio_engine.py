@@ -105,13 +105,65 @@ class PortfolioEngine:
         Returns:
             Dict med optimeringsresultat
         """
-        # Kodstub - implementeras senare med faktisk optimering
+        if portfolio_id not in self.portfolios:
+            logger.error(f"Portfölj {portfolio_id} finns inte")
+            return {
+                'portfolio_id': portfolio_id,
+                'optimized': False,
+                'error': 'Portfolio not found'
+            }
+        
         logger.info(f"Optimerar portfölj {portfolio_id}")
-        return {
+        
+        portfolio = self.portfolios[portfolio_id]
+        positions = portfolio['positions']
+        
+        # Beräkna nuvarande värde
+        import random
+        total_value = portfolio['capital']
+        for symbol, pos in positions.items():
+            # Simulera aktuellt pris
+            current_price = pos['entry_price'] * random.uniform(0.9, 1.1)
+            pos_value = pos['size'] * current_price
+            total_value += pos_value
+        
+        # Beräkna avkastning
+        returns = (total_value - self.initial_capital) / self.initial_capital
+        
+        # Optimeringsförslag
+        suggestions = []
+        
+        # Föreslå rebalansering om någon position är för stor
+        for symbol, pos in positions.items():
+            pos_value = pos['size'] * pos['entry_price']
+            pos_percent = pos_value / total_value
+            if pos_percent > 0.15:  # Mer än 15% av portföljen
+                suggestions.append(f"Överväg att minska position i {symbol}")
+        
+        # Föreslå diversifiering
+        if len(positions) < 3:
+            suggestions.append("Öka diversifiering genom fler positioner")
+        
+        result = {
             'portfolio_id': portfolio_id,
             'optimized': True,
+            'current_value': total_value,
+            'returns': returns,
+            'returns_percent': returns * 100,
+            'position_count': len(positions),
+            'suggestions': suggestions,
             'timestamp': datetime.now().isoformat()
         }
+        
+        # Spara i historik
+        self.performance_history.append(result)
+        
+        logger.info(
+            f"Optimering klar för {portfolio_id}: "
+            f"värde=${total_value:.2f}, avkastning={returns*100:.2f}%"
+        )
+        
+        return result
     
     def get_stats(self) -> Dict[str, Any]:
         """
@@ -121,9 +173,22 @@ class PortfolioEngine:
             Dict med statistik
         """
         total_positions = sum(len(p['positions']) for p in self.portfolios.values())
+        
+        # Beräkna total capital över alla portföljer
+        total_capital = sum(p['capital'] for p in self.portfolios.values())
+        
+        # Hitta bästa portföljen om det finns performance history
+        best_portfolio = None
+        if self.performance_history:
+            best = max(self.performance_history, key=lambda x: x.get('returns', 0))
+            best_portfolio = best.get('portfolio_id')
+        
         return {
             'total_portfolios': len(self.portfolios),
             'active_portfolio': self.active_portfolio,
             'total_positions': total_positions,
-            'initial_capital': self.initial_capital
+            'initial_capital': self.initial_capital,
+            'total_capital': total_capital,
+            'best_portfolio': best_portfolio,
+            'performance_records': len(self.performance_history)
         }

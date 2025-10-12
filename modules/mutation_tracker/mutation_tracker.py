@@ -144,16 +144,38 @@ class MutationTracker:
         Returns:
             Dict med jämförelse
         """
-        # Kodstub
         gen1_mutations = [m for m in self.mutations.values() if m['generation'] == gen1]
         gen2_mutations = [m for m in self.mutations.values() if m['generation'] == gen2]
+        
+        # Beräkna genomsnittlig prestanda per generation
+        gen1_performances = []
+        for m in gen1_mutations:
+            if m['id'] in self.performance_history and self.performance_history[m['id']]:
+                avg_perf = sum(self.performance_history[m['id']]) / len(self.performance_history[m['id']])
+                gen1_performances.append(avg_perf)
+        
+        gen2_performances = []
+        for m in gen2_mutations:
+            if m['id'] in self.performance_history and self.performance_history[m['id']]:
+                avg_perf = sum(self.performance_history[m['id']]) / len(self.performance_history[m['id']])
+                gen2_performances.append(avg_perf)
+        
+        gen1_avg = sum(gen1_performances) / len(gen1_performances) if gen1_performances else 0
+        gen2_avg = sum(gen2_performances) / len(gen2_performances) if gen2_performances else 0
+        
+        improvement = gen2_avg - gen1_avg
+        improvement_pct = (improvement / gen1_avg * 100) if gen1_avg > 0 else 0
         
         return {
             'generation_1': gen1,
             'generation_2': gen2,
             'gen1_count': len(gen1_mutations),
             'gen2_count': len(gen2_mutations),
-            'comparison': 'Generation comparison'
+            'gen1_avg_performance': gen1_avg,
+            'gen2_avg_performance': gen2_avg,
+            'improvement': improvement,
+            'improvement_percent': improvement_pct,
+            'comparison': 'Improvement' if improvement > 0 else 'Decline' if improvement < 0 else 'No change'
         }
     
     def get_best_lineage(self) -> List[str]:

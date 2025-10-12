@@ -86,11 +86,75 @@ class SymbolMemory:
         Returns:
             Lista med identifierade mönster
         """
-        # Kodstub - implementeras senare med faktisk pattern recognition
+        if symbol not in self.memory or len(self.memory[symbol]) < 5:
+            # Inte tillräckligt med data för pattern recognition
+            return []
+        
         if symbol not in self.patterns:
             self.patterns[symbol] = []
         
-        return self.patterns[symbol]
+        history = list(self.memory[symbol])
+        detected_patterns = []
+        
+        # Pattern 1: Volatilitetsspike
+        if len(history) >= 10:
+            recent_volatility = [e.get('volatility', 0) for e in history[-10:] 
+                               if 'volatility' in e]
+            if recent_volatility:
+                avg_vol = sum(recent_volatility) / len(recent_volatility)
+                if recent_volatility[-1] > avg_vol * 1.5:
+                    detected_patterns.append({
+                        'type': 'volatility_spike',
+                        'description': 'Ökad volatilitet detekterad',
+                        'value': recent_volatility[-1],
+                        'average': avg_vol,
+                        'timestamp': datetime.now().isoformat()
+                    })
+        
+        # Pattern 2: Trendomvändning
+        prices = [e.get('price', 0) for e in history[-5:] if 'price' in e]
+        if len(prices) >= 5:
+            # Kolla om trend vänder
+            first_half_trend = prices[2] - prices[0]
+            second_half_trend = prices[4] - prices[2]
+            
+            if first_half_trend > 0 and second_half_trend < 0:
+                detected_patterns.append({
+                    'type': 'trend_reversal_down',
+                    'description': 'Uppåtgående trend vänder nedåt',
+                    'timestamp': datetime.now().isoformat()
+                })
+            elif first_half_trend < 0 and second_half_trend > 0:
+                detected_patterns.append({
+                    'type': 'trend_reversal_up',
+                    'description': 'Nedåtgående trend vänder uppåt',
+                    'timestamp': datetime.now().isoformat()
+                })
+        
+        # Pattern 3: Volymspike
+        volumes = [e.get('volume', 0) for e in history[-10:] if 'volume' in e]
+        if volumes and len(volumes) >= 5:
+            avg_volume = sum(volumes[:-1]) / len(volumes[:-1])
+            if volumes[-1] > avg_volume * 2:
+                detected_patterns.append({
+                    'type': 'volume_spike',
+                    'description': 'Ovanligt hög volym',
+                    'value': volumes[-1],
+                    'average': avg_volume,
+                    'timestamp': datetime.now().isoformat()
+                })
+        
+        # Lägg till nya mönster i patterns
+        self.patterns[symbol].extend(detected_patterns)
+        
+        # Begränsa antal sparade mönster per symbol
+        if len(self.patterns[symbol]) > 50:
+            self.patterns[symbol] = self.patterns[symbol][-50:]
+        
+        if detected_patterns:
+            logger.info(f"Identifierade {len(detected_patterns)} mönster för {symbol}")
+        
+        return detected_patterns
     
     def get_symbol_profile(self, symbol: str) -> Dict[str, Any]:
         """
@@ -104,14 +168,60 @@ class SymbolMemory:
         """
         history = self.get_history(symbol)
         
-        # Kodstub
-        return {
+        if not history:
+            return {
+                'symbol': symbol,
+                'total_events': 0,
+                'patterns': 0,
+                'profile': 'unknown'
+            }
+        
+        # Beräkna profilstatistik
+        prices = [e.get('price', 0) for e in history if 'price' in e]
+        volumes = [e.get('volume', 0) for e in history if 'volume' in e]
+        
+        profile = {
             'symbol': symbol,
             'total_events': len(history),
             'patterns': len(self.patterns.get(symbol, [])),
-            'first_seen': history[0]['timestamp'] if history else None,
-            'last_seen': history[-1]['timestamp'] if history else None
+            'first_seen': history[0].get('timestamp'),
+            'last_seen': history[-1].get('timestamp')
         }
+        
+        # Statistik om priser
+        if prices:
+            profile['price_stats'] = {
+                'min': min(prices),
+                'max': max(prices),
+                'avg': sum(prices) / len(prices),
+                'latest': prices[-1]
+            }
+            
+            # Beräkna volatilitet (standardavvikelse)
+            avg_price = profile['price_stats']['avg']
+            variance = sum((p - avg_price) ** 2 for p in prices) / len(prices)
+            profile['price_stats']['volatility'] = variance ** 0.5
+        
+        # Statistik om volym
+        if volumes:
+            profile['volume_stats'] = {
+                'min': min(volumes),
+                'max': max(volumes),
+                'avg': sum(volumes) / len(volumes),
+                'latest': volumes[-1]
+            }
+        
+        # Klassificera symbol baserat på beteende
+        if prices and len(prices) >= 5:
+            price_change = (prices[-1] - prices[0]) / prices[0] if prices[0] > 0 else 0
+            if price_change > 0.1:
+                profile['trend'] = 'bullish'
+            elif price_change < -0.1:
+                profile['trend'] = 'bearish'
+            else:
+                profile['trend'] = 'neutral'
+        
+        return profile
     
     def clear_history(self, symbol: Optional[str] = None) -> int:
         """

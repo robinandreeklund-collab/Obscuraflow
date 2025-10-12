@@ -7,27 +7,27 @@ Obscuraflow är ett avancerat, modulärt och självlärande AI-tradingekosystem 
 
 ## 📊 Modulstatus
 
-| Modul                | Status           | Kommentar                    |
-|----------------------|------------------|------------------------------|
-| data_stream          | Klar             | Datainhämtning & trendanalys |
-| trending_pool        | Klar             | Symbolranking                |
-| decision_core        | Klar             | Beslutsmotor                 |
-| vote_engine          | Klar             | Röstningssystem              |
-| fusion               | Klar             | Kodstub implementerad        |
-| sizing               | Klar             | Kodstub implementerad        |
-| timespan_engine      | Klar             | Kodstub implementerad        |
-| portfolio_engine     | Klar             | Kodstub implementerad        |
-| evolution            | Klar             | Kodstub implementerad        |
-| self_critique        | Klar             | Kodstub implementerad        |
-| symbol_memory        | Klar             | Kodstub implementerad        |
-| narrative_engine     | Klar             | Kodstub implementerad        |
-| mutation_tracker     | Klar             | Kodstub implementerad        |
-| synergy_matrix       | Klar             | Kodstub implementerad        |
-| agent_spectrum       | Klar             | Kodstub implementerad        |
-| agent_lifecycle      | Klar             | Kodstub implementerad        |
-| metaagentgovernor    | Klar             | Kodstub implementerad        |
-| portfolio_comparator | Klar             | Kodstub implementerad        |
-| risk_mapper          | Klar             | Kodstub implementerad        |
+| Modul                | Status           | Kommentar                     |
+|----------------------|------------------|-------------------------------|
+| data_stream          | Klar             | Full implementation & test    |
+| trending_pool        | Klar             | Full implementation & test    |
+| decision_core        | Klar             | Full implementation & test    |
+| vote_engine          | Klar             | Full implementation & test    |
+| fusion               | Klar             | Full implementation & test    |
+| sizing               | Klar             | Full implementation & test    |
+| timespan_engine      | Klar             | Full implementation & test    |
+| portfolio_engine     | Klar             | Full implementation & test    |
+| evolution            | Klar             | Full implementation & test    |
+| self_critique        | Klar             | Full implementation & test    |
+| symbol_memory        | Klar             | Full implementation & test    |
+| narrative_engine     | Klar             | Full implementation & test    |
+| mutation_tracker     | Klar             | Full implementation & test    |
+| synergy_matrix       | Klar             | Full implementation & test    |
+| agent_spectrum       | Klar             | Full implementation & test    |
+| agent_lifecycle      | Klar             | Full implementation & test    |
+| metaagentgovernor    | Klar             | Full implementation & test    |
+| portfolio_comparator | Klar             | Full implementation & test    |
+| risk_mapper          | Klar             | Full implementation & test    |
 
 ---
 

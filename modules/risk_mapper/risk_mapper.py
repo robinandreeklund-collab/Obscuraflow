@@ -239,6 +239,7 @@ class RiskMapper:
         if symbol not in self.risk_matrix:
             return {
                 'symbol': symbol,
+                'desired_size': desired_size,
                 'suggested_size': desired_size,
                 'adjustment': 'none',
                 'reason': 'no_risk_data'
@@ -246,6 +247,7 @@ class RiskMapper:
         
         risk_data = self.risk_matrix[symbol]
         risk_level = risk_data['risk_level']
+        base_risk = risk_data['base_risk']
         
         # Justera storlek baserat på risk
         adjustment_factors = {
@@ -257,13 +259,31 @@ class RiskMapper:
         factor = adjustment_factors.get(risk_level, 0.5)
         adjusted_size = desired_size * factor
         
+        # Ytterligare justering baserat på portföljens totala risk
+        if hasattr(self, 'risk_history') and self.risk_history:
+            latest_portfolio_risk = self.risk_history[-1]['total_risk']
+            if latest_portfolio_risk > self.max_portfolio_risk * 0.8:
+                # Nära maxgränsen, reducera ytterligare
+                additional_reduction = 0.8
+                adjusted_size *= additional_reduction
+                reason_addon = f', portfolio near limit ({latest_portfolio_risk:.2%})'
+            else:
+                reason_addon = ''
+        else:
+            reason_addon = ''
+        
+        # Säkerställ att vi inte överstiger max portfolio risk contribution
+        max_single_position = portfolio_value * 0.15  # Max 15% i en position
+        adjusted_size = min(adjusted_size, max_single_position)
+        
         return {
             'symbol': symbol,
             'desired_size': desired_size,
             'suggested_size': adjusted_size,
             'risk_level': risk_level,
             'adjustment_factor': factor,
-            'reason': f'risk_{risk_level}'
+            'reason': f'risk_{risk_level}{reason_addon}',
+            'base_risk': base_risk
         }
     
     def get_risk_summary(self) -> Dict[str, Any]:

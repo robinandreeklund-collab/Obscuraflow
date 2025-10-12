@@ -141,6 +141,10 @@ class SynergyMatrix:
                 partners.append((partner, score))
         
         partners.sort(key=lambda x: x[1], reverse=True)
+        
+        if partners:
+            logger.info(f"Hittade {len(partners)} partners för {agent}, bästa: {partners[0][0]} (score={partners[0][1]:.3f})")
+        
         return partners[:n]
     
     def get_conflict_agents(self, agent: str, threshold: float = -0.3) -> List[str]:
@@ -161,6 +165,9 @@ class SynergyMatrix:
                 conflict_agent = a2 if a1 == agent else a1
                 conflicts.append(conflict_agent)
         
+        if conflicts:
+            logger.warning(f"Agent {agent} har {len(conflicts)} konfliktande agenter")
+        
         return conflicts
     
     def get_matrix_summary(self) -> Dict[str, Any]:
@@ -175,19 +182,35 @@ class SynergyMatrix:
                 'total_pairs': 0,
                 'avg_synergy': 0.0,
                 'high_synergy_pairs': 0,
-                'conflict_pairs': 0
+                'conflict_pairs': 0,
+                'neutral_pairs': 0
             }
         
         scores = list(self.matrix.values())
         avg_synergy = sum(scores) / len(scores)
         high_synergy = sum(1 for s in scores if s > 0.5)
         conflict_pairs = sum(1 for s in scores if s < -0.3)
+        neutral_pairs = sum(1 for s in scores if -0.3 <= s <= 0.5)
+        
+        # Beräkna standard deviation för synergifördelning
+        if len(scores) > 1:
+            variance = sum((s - avg_synergy) ** 2 for s in scores) / len(scores)
+            std_dev = variance ** 0.5
+        else:
+            std_dev = 0.0
         
         return {
             'total_pairs': len(self.matrix),
             'avg_synergy': avg_synergy,
+            'std_dev_synergy': std_dev,
             'high_synergy_pairs': high_synergy,
-            'conflict_pairs': conflict_pairs
+            'conflict_pairs': conflict_pairs,
+            'neutral_pairs': neutral_pairs,
+            'synergy_distribution': {
+                'positive': high_synergy,
+                'neutral': neutral_pairs,
+                'negative': conflict_pairs
+            }
         }
     
     def get_stats(self) -> Dict[str, Any]:

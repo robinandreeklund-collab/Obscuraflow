@@ -78,10 +78,10 @@ class PortfolioComparator:
             logger.error("En eller flera portföljer finns inte")
             return {}
         
-        # Kodstub - implementeras senare med faktisk jämförelse
         comparison = {
             'portfolios': portfolio_ids,
             'metrics': {},
+            'rankings': {},
             'timestamp': datetime.now().isoformat()
         }
         
@@ -91,11 +91,33 @@ class PortfolioComparator:
             comparison['metrics'][pid] = {
                 'return': portfolio.get('return', 0.0),
                 'risk': portfolio.get('risk', 0.0),
-                'sharpe': portfolio.get('sharpe', 0.0)
+                'sharpe': portfolio.get('sharpe', 0.0),
+                'max_drawdown': portfolio.get('max_drawdown', 0.0),
+                'win_rate': portfolio.get('win_rate', 0.0)
             }
         
+        # Rankningar per metrik
+        for metric in ['return', 'sharpe', 'win_rate']:
+            sorted_portfolios = sorted(
+                portfolio_ids,
+                key=lambda pid: comparison['metrics'][pid].get(metric, 0.0),
+                reverse=True
+            )
+            comparison['rankings'][metric] = sorted_portfolios
+        
+        # Risk ranking (lägre är bättre)
+        sorted_risk = sorted(
+            portfolio_ids,
+            key=lambda pid: comparison['metrics'][pid].get('risk', 0.0)
+        )
+        comparison['rankings']['risk'] = sorted_risk
+        
+        # Beräkna overall winner (baserat på Sharpe ratio)
+        if 'sharpe' in comparison['rankings']:
+            comparison['overall_winner'] = comparison['rankings']['sharpe'][0]
+        
         self.comparison_history.append(comparison)
-        logger.info(f"Jämförde {len(portfolio_ids)} portföljer")
+        logger.info(f"Jämförde {len(portfolio_ids)} portföljer, vinnare: {comparison.get('overall_winner')}")
         return comparison
     
     def rank_portfolios(self, metric: str = 'sharpe') -> List[Tuple[str, float]]:
@@ -143,16 +165,35 @@ class PortfolioComparator:
         portfolio = self.portfolios[portfolio_id]
         benchmark = self.benchmarks[benchmark_id]
         
-        # Kodstub
+        # Beräkna alpha (excess return)
+        portfolio_return = portfolio.get('return', 0.0)
+        benchmark_return = benchmark.get('return', 0.0)
+        alpha = portfolio_return - benchmark_return
+        
+        # Beräkna relativ performance
+        relative_performance = portfolio_return / max(benchmark_return, 0.01) if benchmark_return > 0 else 0.0
+        
+        # Beräkna tracking error (om data finns)
+        tracking_error = abs(portfolio.get('risk', 0.0) - benchmark.get('risk', 0.0))
+        
+        # Information ratio (alpha / tracking error)
+        information_ratio = alpha / tracking_error if tracking_error > 0 else 0.0
+        
         comparison = {
             'portfolio': portfolio_id,
             'benchmark': benchmark_id,
-            'alpha': portfolio.get('return', 0.0) - benchmark.get('return', 0.0),
-            'relative_performance': portfolio.get('return', 0.0) / max(benchmark.get('return', 1.0), 0.01),
+            'alpha': alpha,
+            'relative_performance': relative_performance,
+            'tracking_error': tracking_error,
+            'information_ratio': information_ratio,
+            'outperformance': alpha > 0,
             'timestamp': datetime.now().isoformat()
         }
         
-        logger.info(f"Jämförde {portfolio_id} mot benchmark {benchmark_id}")
+        logger.info(
+            f"Jämförde {portfolio_id} mot benchmark {benchmark_id}: "
+            f"alpha={alpha:.4f}, outperformance={alpha > 0}"
+        )
         return comparison
     
     def get_best_portfolio(self, metric: str = 'sharpe') -> Optional[str]:
@@ -186,17 +227,43 @@ class PortfolioComparator:
             return {}
         
         if abs(sum(weights) - 1.0) > 0.01:
-            logger.error("Vikter måste summera till 1.0")
+            logger.error(f"Vikter måste summera till 1.0, fick {sum(weights):.4f}")
             return {}
         
-        # Kodstub
+        # Validera att alla portföljer finns
+        if not all(pid in self.portfolios for pid in portfolio_ids):
+            logger.error("En eller flera portföljer finns inte")
+            return {}
+        
+        # Beräkna viktade metriker för meta-portfölj
+        weighted_return = sum(
+            self.portfolios[pid].get('return', 0.0) * weight
+            for pid, weight in zip(portfolio_ids, weights)
+        )
+        
+        weighted_risk = sum(
+            self.portfolios[pid].get('risk', 0.0) * weight
+            for pid, weight in zip(portfolio_ids, weights)
+        )
+        
+        # Sharpe ratio för meta-portfölj
+        weighted_sharpe = weighted_return / weighted_risk if weighted_risk > 0 else 0.0
+        
         meta_portfolio = {
             'type': 'meta',
             'components': list(zip(portfolio_ids, weights)),
+            'metrics': {
+                'return': weighted_return,
+                'risk': weighted_risk,
+                'sharpe': weighted_sharpe
+            },
             'created_at': datetime.now().isoformat()
         }
         
-        logger.info(f"Skapade meta-portfölj från {len(portfolio_ids)} portföljer")
+        logger.info(
+            f"Skapade meta-portfölj från {len(portfolio_ids)} portföljer: "
+            f"return={weighted_return:.4f}, sharpe={weighted_sharpe:.4f}"
+        )
         return meta_portfolio
     
     def get_recommendations(self, min_sharpe: float = 1.0) -> List[str]:

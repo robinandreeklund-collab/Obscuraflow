@@ -171,7 +171,7 @@ class AgentSpectrum:
         Returns:
             Lista med clusters (listor med agent-ID)
         """
-        # Kodstub - enkel greedy clustering
+        # Implementerad greedy clustering algoritm
         clusters = []
         unclustered = set(self.agent_positions.keys())
         
@@ -179,14 +179,26 @@ class AgentSpectrum:
             agent = unclustered.pop()
             cluster = [agent]
             
+            # Hitta alla agenter inom max_distance från alla i clustret
             for other in list(unclustered):
-                if self.get_distance(agent, other) <= max_distance:
+                # Kontrollera avstånd till alla i befintligt cluster
+                distances_to_cluster = [
+                    self.get_distance(cluster_member, other)
+                    for cluster_member in cluster
+                ]
+                avg_distance = sum(distances_to_cluster) / len(distances_to_cluster)
+                
+                if avg_distance <= max_distance:
                     cluster.append(other)
                     unclustered.remove(other)
             
             clusters.append(cluster)
         
-        logger.info(f"Skapade {len(clusters)} clusters")
+        if clusters:
+            avg_size = sum(len(c) for c in clusters) / len(clusters)
+        else:
+            avg_size = 0.0
+        logger.info(f"Skapade {len(clusters)} clusters (avg size: {avg_size:.1f})")
         return clusters
     
     def get_agent_profile(self, agent_id: str) -> Optional[Dict[str, Any]]:
@@ -203,11 +215,38 @@ class AgentSpectrum:
             return None
         
         position = self.agent_positions[agent_id]
+        nearest = self.find_nearest_agents(agent_id, 3)
+        
+        # Beräkna rörlighet baserat på historik
+        history = self.position_history.get(agent_id, [])
+        mobility = 0.0
+        if len(history) > 1:
+            total_movement = 0.0
+            for i in range(1, len(history)):
+                prev_pos = history[i-1]['position']
+                curr_pos = history[i]['position']
+                movement = sum((c - p) ** 2 for c, p in zip(curr_pos, prev_pos)) ** 0.5
+                total_movement += movement
+            mobility = total_movement / (len(history) - 1)
+        
+        # Karakterisera agenten baserat på position
+        characteristics = {}
+        for dim, val in zip(self.dimensions, position):
+            if val > 0.7:
+                characteristics[dim] = 'high'
+            elif val < 0.3:
+                characteristics[dim] = 'low'
+            else:
+                characteristics[dim] = 'medium'
+        
         profile = {
             'agent_id': agent_id,
             'position': {dim: val for dim, val in zip(self.dimensions, position)},
-            'movement_history': len(self.position_history.get(agent_id, [])),
-            'nearest_agents': self.find_nearest_agents(agent_id, 3)
+            'characteristics': characteristics,
+            'mobility_score': mobility,
+            'movement_history': len(history),
+            'nearest_agents': nearest,
+            'is_stable': mobility < 0.1
         }
         
         return profile

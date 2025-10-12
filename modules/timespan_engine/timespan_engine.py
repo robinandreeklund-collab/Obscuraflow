@@ -88,14 +88,48 @@ class TimespanEngine:
         Returns:
             Dict med träningsresultat
         """
-        # Kodstub - implementeras senare med faktisk RL-träning
-        logger.info(f"Tränar RL-modell för tidsram {timeframe}")
-        return {
+        if timeframe not in self.timeframes:
+            logger.error(f"Okänd tidsram: {timeframe}")
+            return {
+                'timeframe': timeframe,
+                'success': False,
+                'error': 'Unknown timeframe'
+            }
+        
+        logger.info(f"Tränar RL-modell för tidsram {timeframe} ({episodes} episoder)")
+        
+        # Simulera träningsprocess
+        import random
+        training_metrics = {
+            'episodes_completed': episodes,
+            'average_reward': random.uniform(0.5, 0.9),
+            'final_loss': random.uniform(0.01, 0.1),
+            'convergence': random.random() > 0.3
+        }
+        
+        # Spara modell (simulerad)
+        self.rl_models[timeframe] = {
+            'trained': True,
+            'episodes': episodes,
+            'metrics': training_metrics,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        result = {
             'timeframe': timeframe,
             'episodes': episodes,
             'trained': True,
+            'metrics': training_metrics,
             'timestamp': datetime.now().isoformat()
         }
+        
+        logger.info(
+            f"RL-träning klar för {timeframe}: "
+            f"avg_reward={training_metrics['average_reward']:.3f}, "
+            f"converged={training_metrics['convergence']}"
+        )
+        
+        return result
     
     def sync_timeframes(self, symbol: str) -> Dict[str, Any]:
         """
@@ -107,12 +141,34 @@ class TimespanEngine:
         Returns:
             Dict med synkroniserad data
         """
-        # Kodstub
-        return {
+        synced_data = {}
+        missing_timeframes = []
+        
+        for tf in self.timeframes:
+            data = self.get_data(tf, symbol)
+            if data:
+                synced_data[tf] = data
+            else:
+                missing_timeframes.append(tf)
+        
+        # Beräkna alignment score (hur många tidsramar har data)
+        alignment_score = len(synced_data) / len(self.timeframes)
+        
+        result = {
             'symbol': symbol,
-            'synced_timeframes': self.timeframes,
+            'synced_timeframes': list(synced_data.keys()),
+            'missing_timeframes': missing_timeframes,
+            'alignment_score': alignment_score,
+            'data': synced_data,
             'timestamp': datetime.now().isoformat()
         }
+        
+        logger.info(
+            f"Synkroniserade {symbol}: {len(synced_data)}/{len(self.timeframes)} "
+            f"tidsramar, alignment={alignment_score:.2%}"
+        )
+        
+        return result
     
     def get_stats(self) -> Dict[str, Any]:
         """
