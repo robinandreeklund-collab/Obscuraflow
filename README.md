@@ -982,28 +982,81 @@ Kopplingar:
 12. ✅ **System Flow** - Visuell systemkarta
 13. ✅ **Narrative Engine** - Händelseflöde och berättelse
 
-**Starta Dashboard:**
+---
+
+## 🚀 Kom igång med Dashboarden
+
+### 1. Installera beroenden
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Konfigurera Finnhub API (Valfritt)
+
+För att använda live marknadsdata behöver du en Finnhub API-nyckel:
+
+1. Registrera dig gratis på [Finnhub.io](https://finnhub.io/register)
+2. Kopiera din API-nyckel från dashboarden
+3. Sätt API-nyckeln som en miljövariabel:
+
+```bash
+# Linux/Mac
+export FINNHUB_API_KEY="din_api_nyckel_här"
+
+# Windows (PowerShell)
+$env:FINNHUB_API_KEY="din_api_nyckel_här"
+
+# Windows (CMD)
+set FINNHUB_API_KEY=din_api_nyckel_här
+```
+
+**Notera:** Om ingen API-nyckel sätts kommer dashboarden automatiskt att använda simulerad data (mock mode).
+
+### 3. Starta Dashboarden
+
 ```bash
 python run_dashboard.py
 ```
+
 Eller:
+
 ```bash
 cd dash_app && python app.py
 ```
 
 Dashboard tillgänglig på: **http://localhost:8050**
 
-**Nya funktioner:**
+### 4. Växla mellan Datakällor
+
+Dashboarden har en **Data Source Toggle** i vänstermenyn:
+
+- **🟡 Mock Data**: Använder simulerad Nasdaq-100 data med realistiska prisvariationer
+- **🟢 Live API**: Använder realtidsdata från Finnhub API (kräver API-nyckel)
+
+Klicka på togglen för att växla mellan datakällor. Alla paneler uppdateras automatiskt.
+
+### Data Source Status
+
+| Läge | Symbol | Beskrivning |
+|------|---------|-------------|
+| Mock Data | 🟡 | Simulerad data med realistiska variationer (Nasdaq-100 aktier) |
+| Live API | 🟢 | Realtidsdata från Finnhub API |
+| API Ej Konfigurerad | ⚠️ | API-nyckel saknas, endast mock data tillgänglig |
+
+**Panelfunktioner:**
 - 🔄 **Data Source Toggle**: Växla mellan mock data och live Finnhub API i sidomenyn
-- 📊 **Enhanced Panels**: Mycket mer detaljerad data och visualiseringar
-- 📈 **Live Market Data**: Realtidsdata från Finnhub API (12 symboler)
-- 🎯 **Detailed Analytics**: Djupgående agentanalys och konsensusöversikt
+- 📊 **Enhanced Panels**: Detaljerad data och visualiseringar från 13+ moduler
+- 📈 **Live/Mock Market Data**: Dynamisk marknadsdata för 12 Nasdaq-100 symboler
+- 🎯 **Real-time Updates**: Auto-refresh var 2-5 sekunder per panel
+- 🤖 **Agent Intelligence**: 16 specialiserade agenter med live beslutsdata
 
 **API Integration:**
-- Finnhub API key konfigurerad i `dash_app/config.py`
+- Finnhub API key via miljövariabel `FINNHUB_API_KEY`
 - Smart caching (60s för quotes, 1h för profiles)
 - Automatisk fallback till mock data vid API-fel
 - Rate limiting skydd (100ms mellan anrop)
+- Stöd för 12 default symboler (konfigurerbart i `dash_app/config.py`)
 
 ### 🚧 Pågående / Planerat
 
