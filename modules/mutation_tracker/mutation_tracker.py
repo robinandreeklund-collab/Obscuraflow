@@ -167,9 +167,14 @@ class MutationTracker:
         if not self.performance_history:
             return []
         
+        # Filtrera bort mutationer utan prestationer
+        non_empty_ids = [mid for mid, perf in self.performance_history.items() if perf]
+        if not non_empty_ids:
+            return []
+        
         # Hitta mutation med bäst genomsnittlig prestation
         best_id = max(
-            self.performance_history.keys(),
+            non_empty_ids,
             key=lambda x: sum(self.performance_history[x]) / len(self.performance_history[x])
         )
         
