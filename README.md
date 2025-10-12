@@ -3,6 +3,34 @@
 
 Obscuraflow är ett avancerat, modulärt och självlärande AI-tradingekosystem byggt i Dash. Systemet kombinerar realtidsmarknadsdata, 17 specialiserade agenter, adaptiva portföljer, RL-träning och en central beslutsmotor. Det är designat för att simulera och exekvera intelligenta tradingbeslut genom agentkonsensus, signalvalidering och ontologisk analys.
 
+---
+
+## 📊 Modulstatus
+
+| Modul                | Status           | Kommentar                    |
+|----------------------|------------------|------------------------------|
+| data_stream          | Under utveckling | Datainhämtning & trendanalys |
+| trending_pool        | Ej påbörjad      | Symbolranking                |
+| decision_core        | Ej påbörjad      | Beslutsmotor                 |
+| vote_engine          | Ej påbörjad      | Röstningssystem              |
+| fusion               | Ej påbörjad      | Signalvalidering             |
+| sizing               | Ej påbörjad      | Position sizing              |
+| timespan_engine      | Ej påbörjad      | Tidsramar & RL-träning       |
+| portfolio_engine     | Ej påbörjad      | Portföljhantering            |
+| evolution            | Ej påbörjad      | Strategimutation             |
+| self_critique        | Ej påbörjad      | Felanalys & introspektion    |
+| symbol_memory        | Ej påbörjad      | Symbolspecifik historik      |
+| narrative_engine     | Ej påbörjad      | Händelseflöde                |
+| mutation_tracker     | Ej påbörjad      | Mutationsträd                |
+| synergy_matrix       | Ej påbörjad      | Agentrelationer              |
+| agent_spectrum       | Ej påbörjad      | Ontologisk karta             |
+| agent_lifecycle      | Ej påbörjad      | Agentens livscykel           |
+| metaagentgovernor    | Ej påbörjad      | Agentråd & prioritering      |
+| portfolio_comparator | Ej påbörjad      | Portföljjämförelse           |
+| risk_mapper          | Ej påbörjad      | Riskmatris                   |
+
+---
+
 🔍 Syfte
 Att skapa ett transparent, introspektivt och evolverande tradingekosystem där varje beslut är spårbart, varje agent är adaptiv och varje portfölj är optimerad för sin marknadsregim.
 
