@@ -13,21 +13,21 @@ Obscuraflow är ett avancerat, modulärt och självlärande AI-tradingekosystem 
 | trending_pool        | Klar             | Symbolranking                |
 | decision_core        | Klar             | Beslutsmotor                 |
 | vote_engine          | Klar             | Röstningssystem              |
-| fusion               | Ej påbörjad      | Signalvalidering             |
-| sizing               | Ej påbörjad      | Position sizing              |
-| timespan_engine      | Ej påbörjad      | Tidsramar & RL-träning       |
-| portfolio_engine     | Ej påbörjad      | Portföljhantering            |
-| evolution            | Ej påbörjad      | Strategimutation             |
-| self_critique        | Ej påbörjad      | Felanalys & introspektion    |
-| symbol_memory        | Ej påbörjad      | Symbolspecifik historik      |
-| narrative_engine     | Ej påbörjad      | Händelseflöde                |
-| mutation_tracker     | Ej påbörjad      | Mutationsträd                |
-| synergy_matrix       | Ej påbörjad      | Agentrelationer              |
-| agent_spectrum       | Ej påbörjad      | Ontologisk karta             |
-| agent_lifecycle      | Ej påbörjad      | Agentens livscykel           |
-| metaagentgovernor    | Ej påbörjad      | Agentråd & prioritering      |
-| portfolio_comparator | Ej påbörjad      | Portföljjämförelse           |
-| risk_mapper          | Ej påbörjad      | Riskmatris                   |
+| fusion               | Klar             | Kodstub implementerad        |
+| sizing               | Klar             | Kodstub implementerad        |
+| timespan_engine      | Klar             | Kodstub implementerad        |
+| portfolio_engine     | Klar             | Kodstub implementerad        |
+| evolution            | Klar             | Kodstub implementerad        |
+| self_critique        | Klar             | Kodstub implementerad        |
+| symbol_memory        | Klar             | Kodstub implementerad        |
+| narrative_engine     | Klar             | Kodstub implementerad        |
+| mutation_tracker     | Klar             | Kodstub implementerad        |
+| synergy_matrix       | Klar             | Kodstub implementerad        |
+| agent_spectrum       | Klar             | Kodstub implementerad        |
+| agent_lifecycle      | Klar             | Kodstub implementerad        |
+| metaagentgovernor    | Klar             | Kodstub implementerad        |
+| portfolio_comparator | Klar             | Kodstub implementerad        |
+| risk_mapper          | Klar             | Kodstub implementerad        |
 
 ---
 
