@@ -605,7 +605,7 @@ def test_system_flow():
     # ========================================================================
     # STEG 15: META GOVERNOR OCH PRIORITERING
     # ========================================================================
-    print("\n--- STEG 15: Meta governor och agentprioriter ing ---")
+    print("\n--- STEG 15: Meta governor och agentprioritering ---")
     
     # Sätt prioriteringar
     print("\n  Sätter agentprioriteringar:")
