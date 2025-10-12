@@ -98,3 +98,16 @@ class Fusion:
             count = len(self.signal_cache)
             self.signal_cache.clear()
             return count
+
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Returnerar statistik om Fusion-instansen för övervakning.
+        
+        Returns:
+            Dict med statistikdata
+        """
+        return {
+            'cached_signals': len(self.signal_cache),
+            'timeframes': self.timeframes,
+            'min_confirmations': self.min_confirmations
+        }
