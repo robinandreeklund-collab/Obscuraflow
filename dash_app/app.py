@@ -36,6 +36,7 @@ server = app.server
 app.layout = dbc.Container(
     [
         dcc.Location(id='url', refresh=False),
+        dcc.Store(id='data-source-store', data='mock'),  # Store for data source state
         dbc.Row(
             [
                 dbc.Col(
@@ -64,16 +65,32 @@ app.layout = dbc.Container(
     className="dashboard-container"
 )
 
+# Callback för data source toggle
+@app.callback(
+    Output('data-source-store', 'data'),
+    [Input('data-source-toggle', 'value')]
+)
+def update_data_source(value):
+    """
+    Uppdaterar data source store när toggle ändras.
+    """
+    return value
+
 # Callback för sidnavigering
 @app.callback(
     [Output('page-header', 'children'),
      Output('page-content', 'children')],
-    [Input('url', 'pathname')]
+    [Input('url', 'pathname'),
+     Input('data-source-store', 'data')]
 )
-def display_page(pathname):
+def display_page(pathname, data_source):
     """
     Router-callback som bestämmer vilket innehåll som ska visas baserat på URL.
     """
+    # Update config based on toggle
+    import dash_app.config as config
+    config.USE_MOCK_DATA = (data_source == 'mock')
+    
     return route_page(pathname)
 
 

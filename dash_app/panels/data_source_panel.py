@@ -17,14 +17,15 @@ def create_panel():
     """
     Skapar Data Source panelen med WebSocket och API monitoring.
     """
-    from dash_app.utils.data_provider import get_data_provider
     from dash_app.config import USE_MOCK_DATA, FINNHUB_API_KEY
     
-    data_provider = get_data_provider(use_mock=USE_MOCK_DATA)
+    # Check current data source mode
+    data_mode = "Mock Data" if USE_MOCK_DATA else "Live API"
+    data_status_icon = "🟡" if USE_MOCK_DATA else "🟢"
     
     header = create_header(
         "Data Source Monitor",
-        "WebSocket subscriptions, REST API calls, latency och data status",
+        f"WebSocket subscriptions, REST API calls, latency och data status | Current: {data_status_icon} {data_mode}",
         "fas fa-satellite-dish"
     )
     
@@ -75,11 +76,13 @@ def create_panel():
     )
     
     # WebSocket status
-    ws_status = "🟢 Connected" if not USE_MOCK_DATA else "🟡 Mock Mode"
+    ws_status = f"🟢 Connected" if not USE_MOCK_DATA else "🟡 Mock Mode (Not Connected)"
     ws_subs = 12 if not USE_MOCK_DATA else 0
+    ws_uptime = "2h 34m" if not USE_MOCK_DATA else "N/A"
+    ws_messages = "1,247" if not USE_MOCK_DATA else "0"
     
     # API status
-    api_status = "🟢 Active" if not USE_MOCK_DATA else "🟡 Mock Data"
+    api_status = f"🟢 Active - Live Data" if not USE_MOCK_DATA else "🟡 Mock Data Mode"
     api_key_masked = FINNHUB_API_KEY[:10] + "..." + FINNHUB_API_KEY[-4:] if FINNHUB_API_KEY else "Not Set"
     
     content = dbc.Container([
@@ -88,7 +91,7 @@ def create_panel():
             dbc.Col([
                 create_metric_card(
                     "Data Source",
-                    "Live API" if not USE_MOCK_DATA else "Mock Data",
+                    f"{'🟢 Live API' if not USE_MOCK_DATA else '🟡 Mock Data'}",
                     icon="fas fa-database"
                 )
             ], width=12, lg=3, md=6),
@@ -129,9 +132,12 @@ def create_panel():
                                     html.H5("Connection Status", style={'color': '#00d9ff'}),
                                     html.H3(ws_status, className="mb-3"),
                                     html.P(f"Subscriptions: {ws_subs} symbols", className="mb-2"),
-                                    html.P(f"Uptime: 2h 34m", className="mb-2"),
-                                    html.P(f"Messages Received: 1,247", className="mb-2"),
-                                    html.P(f"Last Message: {datetime.now().strftime('%H:%M:%S')}", className="mb-2")
+                                    html.P(f"Uptime: {ws_uptime}", className="mb-2"),
+                                    html.P(f"Messages Received: {ws_messages}", className="mb-2"),
+                                    html.P(f"Last Message: {datetime.now().strftime('%H:%M:%S')}", className="mb-2"),
+                                    html.P(f"Mode: {'LIVE API' if not USE_MOCK_DATA else 'MOCK DATA'}", 
+                                          className="mb-2",
+                                          style={'fontWeight': 'bold', 'color': '#00d9ff' if not USE_MOCK_DATA else '#f59e0b'})
                                 ])
                             ], width=12, lg=6),
                             dbc.Col([

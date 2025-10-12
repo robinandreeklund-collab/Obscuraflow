@@ -223,6 +223,7 @@ _data_provider = None
 def get_data_provider(use_mock: Optional[bool] = None) -> DataProvider:
     """Get or create the global data provider instance"""
     global _data_provider
-    if _data_provider is None or use_mock is not None:
+    # Always recreate if use_mock is specified, or if provider doesn't exist
+    if use_mock is not None or _data_provider is None:
         _data_provider = DataProvider(use_mock=use_mock)
     return _data_provider

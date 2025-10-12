@@ -5,7 +5,7 @@ Page Router - Routes URL paths to appropriate panels
 from dash import html
 from dash_app.layout.header import create_header
 from dash_app.panels import (
-    decision_core_panel,
+    decision_core_panel_enhanced as decision_core_panel,
     vote_panel,
     position_sizing_panel,
     timespan_intelligence_panel,
