@@ -16,7 +16,7 @@ def create_panel():
     from modules.portfolio_comparator import PortfolioComparator
     
     comparator = PortfolioComparator()
-    stats = comparator.get_statistics()
+    stats = comparator.get_stats()
     
     header = create_header(
         "Portfolio Intelligence",

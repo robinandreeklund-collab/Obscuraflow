@@ -16,7 +16,7 @@ def create_panel():
     from modules.mutation_tracker import MutationTracker
     
     tracker = MutationTracker()
-    stats = tracker.get_statistics()
+    stats = tracker.get_stats()
     
     header = create_header(
         "Mutation Tracker",

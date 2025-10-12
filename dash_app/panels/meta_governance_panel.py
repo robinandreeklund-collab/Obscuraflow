@@ -16,7 +16,7 @@ def create_panel():
     from modules.metaagentgovernor import MetaAgentGovernor
     
     governor = MetaAgentGovernor()
-    stats = governor.get_statistics()
+    stats = governor.get_stats()
     
     header = create_header(
         "Meta Governance",

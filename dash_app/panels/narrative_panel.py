@@ -16,7 +16,7 @@ def create_panel():
     from modules.narrative_engine import NarrativeEngine
     
     narrative = NarrativeEngine()
-    stats = narrative.get_statistics()
+    stats = narrative.get_stats()
     
     header = create_header(
         "Narrative Engine",

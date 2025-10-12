@@ -16,7 +16,7 @@ def create_panel():
     from modules.portfolio_engine import PortfolioEngine
     
     portfolio = PortfolioEngine()
-    stats = portfolio.get_statistics()
+    stats = portfolio.get_stats()
     
     header = create_header(
         "Multi Portfolio",

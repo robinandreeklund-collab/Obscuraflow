@@ -16,7 +16,7 @@ def create_panel():
     from modules.risk_mapper import RiskMapper
     
     risk_mapper = RiskMapper()
-    stats = risk_mapper.get_statistics()
+    stats = risk_mapper.get_stats()
     
     header = create_header(
         "Risk Ecosystem",

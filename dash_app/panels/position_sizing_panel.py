@@ -15,8 +15,8 @@ def create_panel():
     """
     from modules.sizing import Sizing
     
-    sizing = Sizing(base_capital=100000, max_position_pct=20.0)
-    stats = sizing.get_statistics()
+    sizing = Sizing(max_position_size=0.2, risk_per_trade=0.02, use_kelly=True)
+    stats = sizing.get_stats()
     
     header = create_header(
         "Position Sizing",
@@ -28,8 +28,8 @@ def create_panel():
         dbc.Row([
             dbc.Col([
                 create_metric_card(
-                    "Base Capital",
-                    f"${stats.get('base_capital', 100000):,.0f}",
+                    "Capital",
+                    "$100,000",
                     icon="fas fa-wallet"
                 )
             ], width=3),
@@ -42,8 +42,8 @@ def create_panel():
             ], width=3),
             dbc.Col([
                 create_metric_card(
-                    "Max Position %",
-                    f"{stats.get('max_position_pct', 20.0):.1f}%",
+                    "Max Position Size",
+                    f"{stats.get('max_position_size', 0.2)*100:.1f}%",
                     icon="fas fa-percentage"
                 )
             ], width=3),

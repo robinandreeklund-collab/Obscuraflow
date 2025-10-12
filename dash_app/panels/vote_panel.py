@@ -16,7 +16,7 @@ def create_panel():
     from modules.vote_engine import VoteEngine
     
     vote_engine = VoteEngine(weight_decay=0.95, learning_rate=0.1)
-    stats = vote_engine.get_statistics()
+    stats = vote_engine.get_stats()
     
     header = create_header(
         "Vote Engine",

@@ -16,7 +16,7 @@ def create_panel():
     from modules.agent_spectrum import AgentSpectrum
     
     spectrum = AgentSpectrum()
-    stats = spectrum.get_statistics()
+    stats = spectrum.get_stats()
     
     header = create_header(
         "Agent Spectrum",

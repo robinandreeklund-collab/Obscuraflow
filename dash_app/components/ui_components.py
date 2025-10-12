@@ -56,6 +56,10 @@ def create_data_table(headers, rows, table_id=None):
         rows: Lista med rader (varje rad är en lista med värden)
         table_id: ID för tabellen (valfritt)
     """
+    table_props = {'style': {'width': '100%'}}
+    if table_id:
+        table_props['id'] = table_id
+    
     return html.Div(
         [
             html.Table(
@@ -70,8 +74,7 @@ def create_data_table(headers, rows, table_id=None):
                         ]
                     )
                 ],
-                id=table_id,
-                style={'width': '100%'}
+                **table_props
             )
         ],
         style={'overflowX': 'auto'}

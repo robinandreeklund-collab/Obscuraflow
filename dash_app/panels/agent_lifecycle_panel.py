@@ -16,7 +16,7 @@ def create_panel():
     from modules.agent_lifecycle import AgentLifecycle
     
     lifecycle = AgentLifecycle()
-    stats = lifecycle.get_statistics()
+    stats = lifecycle.get_stats()
     
     header = create_header(
         "Agent Lifecycle",

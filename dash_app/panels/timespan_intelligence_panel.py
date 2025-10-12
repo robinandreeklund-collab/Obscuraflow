@@ -16,7 +16,7 @@ def create_panel():
     from modules.timespan_engine import TimespanEngine
     
     timespan = TimespanEngine()
-    stats = timespan.get_statistics()
+    stats = timespan.get_stats()
     
     header = create_header(
         "Timespan Intelligence",

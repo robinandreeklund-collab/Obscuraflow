@@ -18,7 +18,7 @@ def create_panel():
     
     # Initialize with mock data
     decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4)
-    stats = decision_core.get_statistics()
+    stats = decision_core.get_stats()
     
     header = create_header(
         "Decision Core",
