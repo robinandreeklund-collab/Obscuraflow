@@ -109,10 +109,33 @@ class NarrativeEngine:
         Returns:
             Lista med händelser i kedjan
         """
-        # Kodstub - implementeras senare med faktisk kausal analys
-        chain = [start_event, end_event]
+        # Hitta händelser mellan start och end baserat på timestamp
+        start_idx = None
+        end_idx = None
+        
+        for i, event in enumerate(self.events):
+            event_desc = event.get('description', '')
+            if start_event in event_desc and start_idx is None:
+                start_idx = i
+            if end_event in event_desc:
+                end_idx = i
+        
+        if start_idx is None or end_idx is None or start_idx >= end_idx:
+            # Fallback till enkel kedja
+            chain = [start_event, end_event]
+        else:
+            # Bygg kedja från händelser mellan start och end
+            chain = [start_event]
+            for event in self.events[start_idx+1:end_idx]:
+                chain.append(event.get('description', 'Unknown event'))
+            chain.append(end_event)
+        
         self.causal_chains.append(chain)
-        logger.info(f"Byggde kausal kedja från {start_event} till {end_event}")
+        logger.info(
+            f"Byggde kausal kedja från '{start_event}' till '{end_event}' "
+            f"({len(chain)} steg)"
+        )
+        
         return chain
     
     def get_narrative(self, narrative_id: str) -> Optional[Dict[str, Any]]:
@@ -134,18 +157,53 @@ class NarrativeEngine:
             'length': len(self.narratives[narrative_id])
         }
     
-    def generate_summary(self, timeframe: str = '24h') -> str:
+    def generate_summary(self, timeframe: str = '24h', max_events: int = 10) -> str:
         """
         Genererar sammanfattning av systemberättelsen.
         
         Args:
             timeframe: Tidsram för sammanfattning
+            max_events: Max antal händelser att inkludera
         
         Returns:
             Textsammanfattning
         """
-        # Kodstub
-        return f"Systemsammanfattning för {timeframe}: {len(self.events)} händelser"
+        if not self.events:
+            return f"Systemsammanfattning för {timeframe}: Inga händelser registrerade"
+        
+        # Ta senaste händelserna
+        recent_events = self.events[-max_events:]
+        
+        # Gruppera händelser per typ
+        event_types = {}
+        for event in recent_events:
+            event_type = event.get('type', 'unknown')
+            if event_type not in event_types:
+                event_types[event_type] = []
+            event_types[event_type].append(event)
+        
+        # Bygg sammanfattning
+        summary_parts = [f"Systemsammanfattning för {timeframe}:"]
+        summary_parts.append(f"Totalt {len(self.events)} händelser (visar senaste {len(recent_events)})")
+        summary_parts.append("")
+        
+        # Summera per händelsetyp
+        for event_type, events in event_types.items():
+            summary_parts.append(f"- {event_type}: {len(events)} händelser")
+            # Lägg till exempel på senaste händelsen av denna typ
+            latest = events[-1]
+            summary_parts.append(f"  Senaste: {latest.get('description', 'N/A')}")
+        
+        # Lägg till info om narrativ
+        if self.narratives:
+            summary_parts.append("")
+            summary_parts.append(f"Aktiva narrativ: {len(self.narratives)}")
+        
+        # Lägg till info om kausala kedjor
+        if self.causal_chains:
+            summary_parts.append(f"Kausala kedjor: {len(self.causal_chains)}")
+        
+        return "\n".join(summary_parts)
     
     def get_stats(self) -> Dict[str, Any]:
         """

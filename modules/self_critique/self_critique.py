@@ -77,10 +77,53 @@ class SelfCritique:
         Returns:
             Dict med identifierade mönster
         """
-        # Kodstub
+        if len(self.review_history) == 0:
+            return {
+                'error_patterns': {},
+                'total_reviews': 0,
+                'patterns_found': [],
+                'timestamp': datetime.now().isoformat()
+            }
+        
+        # Analysera felmönster
+        patterns_found = []
+        
+        # Pattern 1: Överkonfidens
+        high_conf_errors = [r for r in self.review_history 
+                          if not r['was_correct'] 
+                          and r['decision'].get('confidence', 0) > 80]
+        if len(high_conf_errors) > 3:
+            patterns_found.append({
+                'type': 'overconfidence',
+                'description': 'Många fel trots hög konfidens',
+                'occurrences': len(high_conf_errors)
+            })
+        
+        # Pattern 2: Underkonfidens
+        low_conf_successes = [r for r in self.review_history 
+                             if r['was_correct'] 
+                             and r['decision'].get('confidence', 100) < 50]
+        if len(low_conf_successes) > 3:
+            patterns_found.append({
+                'type': 'underconfidence',
+                'description': 'Många korrekta beslut med låg konfidens',
+                'occurrences': len(low_conf_successes)
+            })
+        
+        # Pattern 3: Specifika besluttyper som ofta misslyckas
+        for error_type, count in self.error_patterns.items():
+            if count >= 3:
+                patterns_found.append({
+                    'type': f'repeated_error_{error_type}',
+                    'description': f'Återkommande fel för beslut av typ {error_type}',
+                    'occurrences': count
+                })
+        
         return {
             'error_patterns': self.error_patterns,
             'total_reviews': len(self.review_history),
+            'patterns_found': patterns_found,
+            'pattern_count': len(patterns_found),
             'timestamp': datetime.now().isoformat()
         }
     
@@ -107,23 +150,67 @@ class SelfCritique:
         
         return suggestions
     
-    def post_mortem(self, trade_id: str) -> Dict[str, Any]:
+    def post_mortem(self, trade_id: str, trade_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Utför post-mortem analys av en trade.
         
         Args:
             trade_id: ID för trade att analysera
+            trade_data: Data om traden (optional)
         
         Returns:
             Dict med post-mortem analys
         """
-        # Kodstub
         logger.info(f"Utför post-mortem för trade {trade_id}")
-        return {
+        
+        if not trade_data:
+            return {
+                'trade_id': trade_id,
+                'analysis': 'Ingen trade-data tillgänglig',
+                'timestamp': datetime.now().isoformat()
+            }
+        
+        # Analysera traden
+        analysis = {
             'trade_id': trade_id,
-            'analysis': 'Post-mortem analys',
-            'timestamp': datetime.now().isoformat()
+            'outcome': trade_data.get('outcome', 'unknown'),
+            'findings': []
         }
+        
+        # Hitta relaterade reviews
+        related_reviews = [r for r in self.review_history 
+                         if r['decision'].get('trade_id') == trade_id]
+        
+        if related_reviews:
+            analysis['related_reviews'] = len(related_reviews)
+        
+        # Analys baserat på outcome
+        if not trade_data.get('success', False):
+            analysis['findings'].append('Trade misslyckades')
+            
+            # Identifiera möjliga orsaker
+            confidence = trade_data.get('confidence', 0)
+            if confidence > 80:
+                analysis['findings'].append('Hög konfidens - möjlig överkonfidens')
+            
+            entry_reason = trade_data.get('entry_reason', '')
+            if entry_reason:
+                analysis['findings'].append(f'Entry reason: {entry_reason}')
+        else:
+            analysis['findings'].append('Trade lyckades')
+            analysis['findings'].append('Strategi fungerade enligt förväntan')
+        
+        # Lärdomar
+        lessons = []
+        if trade_data.get('pnl', 0) < 0:
+            lessons.append('Överväg tightare stop-loss')
+        if trade_data.get('duration', 0) > 7:
+            lessons.append('Trade varade längre än förväntat')
+        
+        analysis['lessons_learned'] = lessons
+        analysis['timestamp'] = datetime.now().isoformat()
+        
+        return analysis
     
     def get_stats(self) -> Dict[str, Any]:
         """
