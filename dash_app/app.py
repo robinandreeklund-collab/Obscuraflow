@@ -41,6 +41,9 @@ app.layout = dbc.Container(
                 dbc.Col(
                     create_sidebar(),
                     width=2,
+                    lg=2,
+                    md=3,
+                    sm=12,
                     className="sidebar"
                 ),
                 dbc.Col(
@@ -49,6 +52,9 @@ app.layout = dbc.Container(
                         html.Div(id='page-content', className="fade-in")
                     ],
                     width=10,
+                    lg=10,
+                    md=9,
+                    sm=12,
                     className="main-content"
                 )
             ]

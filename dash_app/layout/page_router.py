@@ -17,7 +17,9 @@ from dash_app.panels import (
     portfolio_intelligence_panel,
     risk_ecosystem_panel,
     system_flow_panel,
-    narrative_panel
+    narrative_panel,
+    data_source_panel,
+    portfolio_development_panel
 )
 import dash_bootstrap_components as dbc
 
@@ -129,6 +131,10 @@ def route_page(pathname):
         return system_flow_panel.create_panel()
     elif pathname == '/narrative':
         return narrative_panel.create_panel()
+    elif pathname == '/data-source':
+        return data_source_panel.create_panel()
+    elif pathname == '/portfolio-development':
+        return portfolio_development_panel.create_panel()
     else:
         # Default: Home page
         return create_home_page()

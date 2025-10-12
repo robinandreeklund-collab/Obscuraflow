@@ -85,6 +85,11 @@ def create_sidebar():
                             className="sidebar-nav-link"
                         ),
                         dbc.NavLink(
+                            [html.I(className="fas fa-chart-area me-2"), "Portfolio Development"],
+                            href="/portfolio-development",
+                            className="sidebar-nav-link"
+                        ),
+                        dbc.NavLink(
                             [html.I(className="fas fa-chart-pie me-2"), "Portfolio Intelligence"],
                             href="/portfolio-intelligence",
                             className="sidebar-nav-link"
@@ -102,6 +107,11 @@ def create_sidebar():
                         dbc.NavLink(
                             [html.I(className="fas fa-dna me-2"), "Mutation Tracker"],
                             href="/mutation-tracker",
+                            className="sidebar-nav-link"
+                        ),
+                        dbc.NavLink(
+                            [html.I(className="fas fa-satellite-dish me-2"), "Data Source Monitor"],
+                            href="/data-source",
                             className="sidebar-nav-link"
                         ),
                         dbc.NavLink(

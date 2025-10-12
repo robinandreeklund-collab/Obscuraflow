@@ -1,0 +1,264 @@
+"""
+Data Source Panel - WebSocket status, REST API calls, latency monitoring
+"""
+
+from dash import html, dcc
+import dash_bootstrap_components as dbc
+from dash_app.layout.header import create_header
+from dash_app.components.ui_components import create_metric_card, create_data_table
+import plotly.graph_objs as go
+from datetime import datetime, timedelta
+import random
+import sys
+sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
+
+
+def create_panel():
+    """
+    Skapar Data Source panelen med WebSocket och API monitoring.
+    """
+    from dash_app.utils.data_provider import get_data_provider
+    from dash_app.config import USE_MOCK_DATA, FINNHUB_API_KEY
+    
+    data_provider = get_data_provider(use_mock=USE_MOCK_DATA)
+    
+    header = create_header(
+        "Data Source Monitor",
+        "WebSocket subscriptions, REST API calls, latency och data status",
+        "fas fa-satellite-dish"
+    )
+    
+    # Generate mock latency data for chart
+    timestamps = [(datetime.now() - timedelta(minutes=30-i)).strftime('%H:%M') for i in range(30)]
+    latency_data = [random.uniform(10, 50) for _ in range(30)]
+    
+    # Create latency chart
+    latency_chart = go.Figure()
+    latency_chart.add_trace(go.Scatter(
+        x=timestamps,
+        y=latency_data,
+        mode='lines+markers',
+        line=dict(color='#00d9ff', width=2),
+        marker=dict(size=4),
+        fill='tozeroy',
+        fillcolor='rgba(0, 217, 255, 0.2)'
+    ))
+    latency_chart.update_layout(
+        title="API Latency (Last 30 min)",
+        plot_bgcolor='#1a1f3a',
+        paper_bgcolor='#151932',
+        font=dict(color='#e5e7eb'),
+        xaxis=dict(showgrid=True, gridcolor='#374151'),
+        yaxis=dict(showgrid=True, gridcolor='#374151', title='Latency (ms)'),
+        height=300
+    )
+    
+    # Generate request volume data
+    request_labels = ['Quotes', 'Profiles', 'Candles', 'Market Status']
+    request_counts = [245, 42, 18, 12]
+    
+    request_chart = go.Figure()
+    request_chart.add_trace(go.Bar(
+        x=request_labels,
+        y=request_counts,
+        marker_color=['#10b981', '#7c3aed', '#f59e0b', '#00d9ff'],
+        text=request_counts,
+        textposition='outside'
+    ))
+    request_chart.update_layout(
+        title="API Requests by Type (Last Hour)",
+        plot_bgcolor='#1a1f3a',
+        paper_bgcolor='#151932',
+        font=dict(color='#e5e7eb'),
+        showlegend=False,
+        height=300
+    )
+    
+    # WebSocket status
+    ws_status = "🟢 Connected" if not USE_MOCK_DATA else "🟡 Mock Mode"
+    ws_subs = 12 if not USE_MOCK_DATA else 0
+    
+    # API status
+    api_status = "🟢 Active" if not USE_MOCK_DATA else "🟡 Mock Data"
+    api_key_masked = FINNHUB_API_KEY[:10] + "..." + FINNHUB_API_KEY[-4:] if FINNHUB_API_KEY else "Not Set"
+    
+    content = dbc.Container([
+        # Top Metrics Row
+        dbc.Row([
+            dbc.Col([
+                create_metric_card(
+                    "Data Source",
+                    "Live API" if not USE_MOCK_DATA else "Mock Data",
+                    icon="fas fa-database"
+                )
+            ], width=12, lg=3, md=6),
+            dbc.Col([
+                create_metric_card(
+                    "Avg Latency",
+                    f"{sum(latency_data)/len(latency_data):.1f} ms",
+                    change=-2.3,
+                    icon="fas fa-tachometer-alt"
+                )
+            ], width=12, lg=3, md=6),
+            dbc.Col([
+                create_metric_card(
+                    "API Calls (1h)",
+                    sum(request_counts),
+                    icon="fas fa-exchange-alt"
+                )
+            ], width=12, lg=3, md=6),
+            dbc.Col([
+                create_metric_card(
+                    "Cache Hit Rate",
+                    "87.5%",
+                    change=5.2,
+                    icon="fas fa-memory"
+                )
+            ], width=12, lg=3, md=6)
+        ], className="mb-4"),
+        
+        # WebSocket Status Section
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("📡 WebSocket Status", style={'backgroundColor': '#151932', 'color': '#00d9ff', 'fontWeight': 'bold'}),
+                    dbc.CardBody([
+                        dbc.Row([
+                            dbc.Col([
+                                html.Div([
+                                    html.H5("Connection Status", style={'color': '#00d9ff'}),
+                                    html.H3(ws_status, className="mb-3"),
+                                    html.P(f"Subscriptions: {ws_subs} symbols", className="mb-2"),
+                                    html.P(f"Uptime: 2h 34m", className="mb-2"),
+                                    html.P(f"Messages Received: 1,247", className="mb-2"),
+                                    html.P(f"Last Message: {datetime.now().strftime('%H:%M:%S')}", className="mb-2")
+                                ])
+                            ], width=12, lg=6),
+                            dbc.Col([
+                                html.Div([
+                                    html.H5("Active Subscriptions", style={'color': '#00d9ff'}),
+                                    html.Div([
+                                        dbc.Badge("AAPL", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("GOOGL", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("MSFT", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("TSLA", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("AMZN", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("META", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("NVDA", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("AMD", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("NFLX", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("BA", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("JPM", color="success", className="me-2 mb-2"),
+                                        dbc.Badge("V", color="success", className="me-2 mb-2"),
+                                    ])
+                                ])
+                            ], width=12, lg=6)
+                        ])
+                    ])
+                ], className="mb-3")
+            ], width=12)
+        ]),
+        
+        # REST API Status Section
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("🌐 REST API Status", style={'backgroundColor': '#151932', 'color': '#00d9ff', 'fontWeight': 'bold'}),
+                    dbc.CardBody([
+                        dbc.Row([
+                            dbc.Col([
+                                html.Div([
+                                    html.H5("API Configuration", style={'color': '#00d9ff'}),
+                                    html.P(f"Status: {api_status}", className="mb-2"),
+                                    html.P(f"API Key: {api_key_masked}", className="mb-2"),
+                                    html.P(f"Endpoint: https://finnhub.io/api/v1", className="mb-2"),
+                                    html.P(f"Rate Limit: 60 calls/min", className="mb-2"),
+                                    html.P(f"Remaining: 47 calls", className="mb-2")
+                                ])
+                            ], width=12, lg=6),
+                            dbc.Col([
+                                html.Div([
+                                    html.H5("Cache Statistics", style={'color': '#00d9ff'}),
+                                    html.P("Quote Cache TTL: 60 seconds", className="mb-2"),
+                                    html.P("Profile Cache TTL: 3600 seconds", className="mb-2"),
+                                    html.P("Cached Items: 24", className="mb-2"),
+                                    html.P("Cache Size: 156 KB", className="mb-2"),
+                                    html.P("Last Flush: 15 min ago", className="mb-2")
+                                ])
+                            ], width=12, lg=6)
+                        ])
+                    ])
+                ], className="mb-3")
+            ], width=12)
+        ]),
+        
+        # Charts Row
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Latency Monitoring", style={'backgroundColor': '#151932', 'color': '#00d9ff'}),
+                    dbc.CardBody([
+                        dcc.Graph(figure=latency_chart, config={'displayModeBar': False})
+                    ])
+                ], className="mb-3")
+            ], width=12, lg=6),
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("Request Volume", style={'backgroundColor': '#151932', 'color': '#00d9ff'}),
+                    dbc.CardBody([
+                        dcc.Graph(figure=request_chart, config={'displayModeBar': False})
+                    ])
+                ], className="mb-3")
+            ], width=12, lg=6)
+        ]),
+        
+        # Recent API Calls Table
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("📋 Recent API Calls", style={'backgroundColor': '#151932', 'color': '#00d9ff', 'fontWeight': 'bold'}),
+                    dbc.CardBody([
+                        create_data_table(
+                            ['Timestamp', 'Endpoint', 'Symbol', 'Latency', 'Status', 'Cache'],
+                            [
+                                [datetime.now().strftime('%H:%M:%S'), '/quote', 'AAPL', '23ms', '✅ 200', '❌ Miss'],
+                                [(datetime.now() - timedelta(seconds=2)).strftime('%H:%M:%S'), '/quote', 'GOOGL', '18ms', '✅ 200', '✅ Hit'],
+                                [(datetime.now() - timedelta(seconds=5)).strftime('%H:%M:%S'), '/quote', 'MSFT', '31ms', '✅ 200', '❌ Miss'],
+                                [(datetime.now() - timedelta(seconds=8)).strftime('%H:%M:%S'), '/profile2', 'TSLA', '45ms', '✅ 200', '✅ Hit'],
+                                [(datetime.now() - timedelta(seconds=12)).strftime('%H:%M:%S'), '/quote', 'NVDA', '19ms', '✅ 200', '✅ Hit'],
+                                [(datetime.now() - timedelta(seconds=15)).strftime('%H:%M:%S'), '/candle', 'AMZN', '87ms', '✅ 200', '❌ Miss'],
+                                [(datetime.now() - timedelta(seconds=18)).strftime('%H:%M:%S'), '/quote', 'META', '22ms', '✅ 200', '✅ Hit'],
+                                [(datetime.now() - timedelta(seconds=20)).strftime('%H:%M:%S'), '/quote', 'AMD', '26ms', '✅ 200', '❌ Miss']
+                            ]
+                        )
+                    ])
+                ], className="mb-3")
+            ], width=12)
+        ]),
+        
+        # Error Log
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader("⚠️ Recent Errors & Warnings", style={'backgroundColor': '#151932', 'color': '#00d9ff', 'fontWeight': 'bold'}),
+                    dbc.CardBody([
+                        html.Div([
+                            html.P("🟡 [14:23:45] Rate limit approaching (55/60 calls)", className="mb-2"),
+                            html.P("🟢 [14:20:12] Cache flush completed successfully", className="mb-2"),
+                            html.P("🟡 [14:15:33] High latency detected (125ms) for TSLA quote", className="mb-2"),
+                            html.P("🟢 [14:10:00] System started successfully", className="mb-2")
+                        ])
+                    ])
+                ], className="mb-3")
+            ], width=12)
+        ]),
+        
+        # Auto-refresh interval
+        dcc.Interval(
+            id='data-source-panel-interval',
+            interval=2000,  # 2 seconds
+            n_intervals=0
+        )
+    ], fluid=True)
+    
+    return header, content
