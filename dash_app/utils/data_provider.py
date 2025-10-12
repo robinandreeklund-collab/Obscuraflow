@@ -22,9 +22,10 @@ except ImportError:
     # Fallback for testing
     FINNHUB_API_KEY = ""
     USE_MOCK_DATA = True
-    DEFAULT_SYMBOLS = ['AAPL', 'GOOGL', 'MSFT', 'TSLA']
-
-
+    try:
+        from dash_app.config import DEFAULT_SYMBOLS
+    except ImportError:
+        DEFAULT_SYMBOLS = ['AAPL', 'GOOGL', 'MSFT', 'TSLA']
 class DataProvider:
     """
     Provides market data from either mock or real Finnhub API
