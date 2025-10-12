@@ -481,7 +481,7 @@ def get_data_stream(use_mock: Optional[bool] = None, api_key: Optional[str] = No
     Returns:
         DataStream instans konfigurerad för mock eller live data
     """
-    # Import config här för att undvika cirkulära imports
+    # Import config här för att undvika cirkulärer imports
     try:
         import sys
         import os
