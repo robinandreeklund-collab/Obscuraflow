@@ -993,6 +993,18 @@ cd dash_app && python app.py
 
 Dashboard tillgänglig på: **http://localhost:8050**
 
+**Nya funktioner:**
+- 🔄 **Data Source Toggle**: Växla mellan mock data och live Finnhub API i sidomenyn
+- 📊 **Enhanced Panels**: Mycket mer detaljerad data och visualiseringar
+- 📈 **Live Market Data**: Realtidsdata från Finnhub API (12 symboler)
+- 🎯 **Detailed Analytics**: Djupgående agentanalys och konsensusöversikt
+
+**API Integration:**
+- Finnhub API key konfigurerad i `dash_app/config.py`
+- Smart caching (60s för quotes, 1h för profiles)
+- Automatisk fallback till mock data vid API-fel
+- Rate limiting skydd (100ms mellan anrop)
+
 ### 🚧 Pågående / Planerat
 
 **Hybrider & Meta-Agenter**
