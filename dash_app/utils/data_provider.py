@@ -218,13 +218,7 @@ class DataProvider:
         }
 
 
-# Global instance
-_data_provider = None
-
+# Factory function for DataProvider
 def get_data_provider(use_mock: Optional[bool] = None) -> DataProvider:
-    """Get or create the global data provider instance"""
-    global _data_provider
-    # Always recreate if use_mock is specified, or if provider doesn't exist
-    if use_mock is not None or _data_provider is None:
-        _data_provider = DataProvider(use_mock=use_mock)
-    return _data_provider
+    """Create a new DataProvider instance"""
+    return DataProvider(use_mock=use_mock)
