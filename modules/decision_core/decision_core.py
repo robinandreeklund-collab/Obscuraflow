@@ -199,11 +199,13 @@ class DecisionCore:
         total = len(symbol_decisions)
         buy_ratio = decision_counts[DecisionType.BUY] / total
         sell_ratio = decision_counts[DecisionType.SELL] / total
+        hold_ratio = decision_counts[DecisionType.HOLD] / total
         
-        # Konflikt om buy och sell båda är över tröskeln
+        # Konflikt om buy och sell båda är över tröskeln och hold inte dominerar
         has_conflict = (
             buy_ratio >= self.conflict_threshold and 
-            sell_ratio >= self.conflict_threshold
+            sell_ratio >= self.conflict_threshold and
+            hold_ratio < self.conflict_threshold
         )
         
         if has_conflict:
