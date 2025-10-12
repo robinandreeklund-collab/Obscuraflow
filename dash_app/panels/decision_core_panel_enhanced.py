@@ -17,16 +17,16 @@ def create_panel():
     """
     # Import modules
     from modules.decision_core import DecisionCore
-    from dash_app.utils.data_provider import get_data_provider
+    from modules.data_stream.data_stream import get_data_stream
     from dash_app.config import USE_MOCK_DATA
     
     # Initialize with configurable data source
     decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4)
     stats = decision_core.get_stats()
     
-    # Get market data
-    data_provider = get_data_provider(use_mock=USE_MOCK_DATA)
-    market_summary = data_provider.get_market_summary()
+    # Get market data using DataStream
+    data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+    market_summary = data_stream.get_market_summary()
     quotes = market_summary['quotes']
     
     header = create_header(
