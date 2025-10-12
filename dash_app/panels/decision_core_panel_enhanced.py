@@ -8,7 +8,8 @@ from dash_app.layout.header import create_header
 from dash_app.components.ui_components import create_metric_card, create_data_table, create_bar_chart
 import plotly.graph_objs as go
 import sys
-sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 def create_panel():
     """
