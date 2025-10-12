@@ -1,37 +1,52 @@
 """
 Dashboard Configuration
-Centralized configuration for API keys and data sources
+Imports and exposes settings from global config for dashboard use
 """
 
+import sys
 import os
-# Finnhub API Configuration
-# Load API key from environment variable for security
-FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY")
 
-# Data Source Toggle
-# Set to False to use real Finnhub API data, True for mock data
-USE_MOCK_DATA = True
+# Add project root to path for imports
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# Default symbols to track
-DEFAULT_SYMBOLS = [
-    'AAPL',   # Apple
-    'GOOGL',  # Google
-    'MSFT',   # Microsoft
-    'TSLA',   # Tesla
-    'AMZN',   # Amazon
-    'META',   # Meta
-    'NVDA',   # NVIDIA
-    'AMD',    # AMD
-    'NFLX',   # Netflix
-    'BA',     # Boeing
-    'JPM',    # JPMorgan
-    'V'       # Visa
+# Import all settings from global config
+from config import (
+    FINNHUB_API_KEY,
+    FINNHUB_REST_URL,
+    FINNHUB_WS_URL,
+    USE_MOCK_DATA,
+    DEFAULT_SYMBOLS,
+    AUTO_REFRESH_INTERVAL,
+    CHART_THEME,
+    QUOTE_CACHE_TTL,
+    PROFILE_CACHE_TTL,
+    API_RATE_LIMIT_DELAY,
+    API_REQUEST_TIMEOUT,
+    MIN_CONFIDENCE,
+    CONFLICT_THRESHOLD,
+    MAX_POSITION_SIZE,
+    RISK_PER_TRADE,
+    USE_KELLY_CRITERION
+)
+
+# Re-export for backward compatibility
+__all__ = [
+    'FINNHUB_API_KEY',
+    'FINNHUB_REST_URL',
+    'FINNHUB_WS_URL',
+    'USE_MOCK_DATA',
+    'DEFAULT_SYMBOLS',
+    'AUTO_REFRESH_INTERVAL',
+    'CHART_THEME',
+    'QUOTE_CACHE_TTL',
+    'PROFILE_CACHE_TTL',
+    'API_RATE_LIMIT_DELAY',
+    'API_REQUEST_TIMEOUT',
+    'MIN_CONFIDENCE',
+    'CONFLICT_THRESHOLD',
+    'MAX_POSITION_SIZE',
+    'RISK_PER_TRADE',
+    'USE_KELLY_CRITERION'
 ]
-
-# Dashboard settings
-AUTO_REFRESH_INTERVAL = 5000  # milliseconds
-CHART_THEME = 'plotly_dark'
-
-# API endpoints
-FINNHUB_REST_URL = "https://finnhub.io/api/v1"
-FINNHUB_WS_URL = "wss://ws.finnhub.io"

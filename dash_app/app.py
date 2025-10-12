@@ -32,6 +32,10 @@ app = Dash(
 # Server för deployment
 server = app.server
 
+# Import and register panel auto-update callbacks
+from dash_app.callbacks.panel_callbacks import register_panel_callbacks
+register_panel_callbacks(app)
+
 # Huvudlayout
 app.layout = dbc.Container(
     [
@@ -88,19 +92,33 @@ def display_page(pathname, data_source):
     Router-callback som bestämmer vilket innehåll som ska visas baserat på URL.
     """
     # Update config based on toggle
-    import dash_app.config as config
-    config.USE_MOCK_DATA = (data_source == 'mock')
+    # Import both dash_app.config and root config to update both
+    import dash_app.config as dash_config
+    import config as root_config
+    
+    # Update both configs to ensure consistency
+    use_mock = (data_source == 'mock')
+    dash_config.USE_MOCK_DATA = use_mock
+    root_config.USE_MOCK_DATA = use_mock
     
     return route_page(pathname)
 
 
 if __name__ == '__main__':
+    import config as root_config
+    
     print("=" * 80)
     print("🌀 OBSCURAFLOW DASHBOARD")
     print("=" * 80)
     print("\nStartar Dash-servern...")
-    print("Dashboard tillgänglig på: http://localhost:8050")
+    print(f"Dashboard tillgänglig på: http://{root_config.DASHBOARD_HOST}:{root_config.DASHBOARD_PORT}")
+    print(f"\n📊 Finnhub API Key: {root_config.FINNHUB_API_KEY[:10]}...{root_config.FINNHUB_API_KEY[-4:]}")
+    print(f"🔄 Data Source: {'Mock Data' if root_config.USE_MOCK_DATA else 'Live API'}")
     print("\nTryck Ctrl+C för att stoppa servern.\n")
     print("=" * 80)
     
-    app.run(debug=True, host='0.0.0.0', port=8050)
+    app.run(
+        debug=root_config.DASHBOARD_DEBUG, 
+        host=root_config.DASHBOARD_HOST, 
+        port=root_config.DASHBOARD_PORT
+    )
