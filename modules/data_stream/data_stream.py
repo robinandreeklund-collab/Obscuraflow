@@ -6,7 +6,7 @@ Denna klass ansvarar för:
 - REST-polling för symbolbatchar
 - Trendanalys (volym, momentum, volatilitet)
 - Dynamisk prenumeration på toppsymboler
-- Simulerad marknadsdata med realistisk prisrörelse
+- Simulering av marknadsdata med realistisk prisrörelse
 """
 
 import logging
