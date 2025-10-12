@@ -402,3 +402,358 @@ Funktioner:
 
 Kopplingar:  
 → sizing/, portfolioengine/, decisioncore/
+
+---
+
+🤖 Obscuraflow – Agentbeskrivning
+
+🧱 Klassiska agenter (4)
+
+| Agent | Strategi | Spanpreferens | Confidence-tröskel | Funktion |
+|-------|----------|----------------|---------------------|----------|
+| MomentumAgent | Trendföljande | Kort (<5 min) | 0.6 | Identifierar och rider på starka prisrörelser |
+| ReversalAgent | Mean reversion | Medel (5–30 min) | 0.65 | Söker överköpta/översålda tillstånd för vändningar |
+| BreakoutAgent | Volatility breakout | Lång (>30 min) | 0.7 | Reagerar på prisgenombrott från konsolidering |
+| HybridAgent | Multi-strategi | Adaptiv | 0.5 | Växlar mellan strategier beroende på marknadsregim |
+
+---
+
+🧠 Paradigmatiska agenter (12)
+
+🔊 EchoAgent – Temporal/Reflective Dimension
+- Funktion: Mönsterreplikering baserat på historik
+- Kapacitet: 500 historiska mönster, 75% matchtröskel
+- Lärande: Förstärker mönster som tidigare varit framgångsrika
+- Kopplingar: symbol_memory, fusion, reflexion, genesis
+
+---
+
+🌀 FractalisAgent – Spatial-Temporal/Complex Dimension
+- Funktion: Fraktalanalys över flera tidsskalor
+- Kapacitet: 5 samtidiga spans, självlikhetskontroll
+- Lärande: Identifierar rekursiva mönster
+- Kopplingar: fusion, timespan_engine, dimensio, architectum
+
+---
+
+🗣️ VoxAgent – Social/Collective Dimension
+- Funktion: Konsensusbyggare mellan agenter
+- Kapacitet: 75% rösttröskel, demokratisk beslutslogik
+- Lärande: Förstärks vid träffsäkra gruppbeslut
+- Kopplingar: voteengine, metaagent_governor, symbio, sentio
+
+---
+
+🍄 MycoAgent – Network/Distributed Dimension
+- Funktion: Informationsspridning genom agentnätverk
+- Kapacitet: 3 nivåers nätverksdjup, 85% decay rate
+- Lärande: Diffunderar insikter till andra agenter
+- Kopplingar: synergymatrix, symbio, portfolioengine
+
+---
+
+🌑 ObscuraAgent – Latent/Obscure Dimension
+- Funktion: Identifierar dolda mönster och anomalier
+- Kapacitet: 2.0σ tröskel för avvikelse
+- Lärande: Specialiserad på icke-uppenbara signaler
+- Kopplingar: fusion, mirage, reflexion, self_critique
+
+---
+
+✨ MirageAgent – Perceptual/Discriminative Dimension
+- Funktion: Filtrerar falska signaler (illusioner)
+- Kapacitet: 65% verklighetströskel
+- Lärande: Validerar mot senaste historik
+- Kopplingar: fusion, obscura, echo, reflexion
+
+---
+
+💗 SentioAgent – Emotional/Empathic Dimension
+- Funktion: Sentimentanalys och emotionell förstärkning
+- Kapacitet: 30-period buffer, fear/greed integration
+- Lärande: Justerar beslut baserat på marknadspsykologi
+- Kopplingar: sizingsentimentadapter, vote_engine, vox, symbio
+
+---
+
+🔄 ReflexionAgent – Meta-Cognitive/Reflective Dimension
+- Funktion: Självreflektion och adaptivt lärande
+- Kapacitet: 100 beslutshistorik, justerar baserat på träffsäkerhet
+- Lärande: Lär sig från misstag och förbättrar sin logik
+- Kopplingar: self_critique, evolution, echo, mirage
+
+---
+
+📐 DimensioAgent – Hyper-Spatial/Analytical Dimension
+- Funktion: Multi-dimensionell analys
+- Kapacitet: 5D feature space: momentum, RSI, trend, volym, volatilitet
+- Lärande: Identifierar komplexa mönster i högdimensionella rum
+- Kopplingar: fusion, fractalis, architectum, portfolio_comparator
+
+---
+
+🤝 SymbioAgent – Relational/Cooperative Dimension
+- Funktion: Samverkan och co-evolution med andra agenter
+- Kapacitet: 50% symbiosstyrka
+- Lärande: Förstärker relationer som ger ömsesidig nytta
+- Kopplingar: synergy_matrix, vox, myco, sentio
+
+---
+
+🌱 GenesisAgent – Origination/Generative Dimension
+- Funktion: Identifierar trendstarter och cykelbörjan
+- Kapacitet: Upptäcker inflektionspunkter och genesis moments
+- Lärande: Specialiserad på att känna igen nya rörelser
+- Kopplingar: forecast_simulator, echo, architectum, fusion
+
+---
+
+🏛️ ArchitectumAgent – Structural/Constructive Dimension
+- Funktion: Strukturell analys och systembyggnad
+- Kapacitet: 4 nivåer: foundation, pillars, framework, roof
+- Lärande: Aktiveras vid strukturscore > 70%
+- Kopplingar: fusion, dimensio, reflexion, genesis
+
+---
+
+🧠 Agentmetadata per dimension
+
+| Dimension | Agenter | Fokus |
+|-----------|---------|-------|
+| Temporal | Echo | Mönsterminne |
+| Fraktal | Fractalis | Självlikhet |
+| Social | Vox | Konsensus |
+| Nätverk | Myco | Informationsspridning |
+| Latent | Obscura | Anomalier |
+| Perceptuell | Mirage | Illusionsfilter |
+| Emotionell | Sentio | Sentiment |
+| Meta-kognitiv | Reflexion | Självlärande |
+| Hyper-spatial | Dimensio | 5D analys |
+| Relationell | Symbio | Samverkan |
+| Generativ | Genesis | Trendstart |
+| Strukturell | Architectum | Systembyggnad |
+
+---
+
+🧠 Obscuraflow – Funktionsbeskrivning
+
+---
+
+🔁 1. Realtidsdata & Symbolanalys
+
+📡 WebSocket & REST-polling
+- Hämtar live-data från Finnhub API
+- Dynamisk prenumeration på aktiva symboler
+- Batch-polling för bred marknadsöversikt
+
+🔥 Trending Pool
+- Rankar symboler baserat på volym, momentum, volatilitet
+- Stabiliserar fluktuationer och filtrerar brus
+- Skickar topplistan till agenter och fusionmodul
+
+---
+
+🤖 2. Agentintelligens & Beslutsgenerering
+
+🧠 Agentlager
+- 17 agenter med unika dimensioner (temporal, fraktal, emotionell, m.fl.)
+- Varje agent analyserar symboler och genererar beslut
+- Hybridagenter kombinerar flera paradigmer
+
+🔀 Fusion Engine
+- Validerar signaler över flera tidsramar
+- Jämför agentbeslut för konsistens
+- Förstärker eller filtrerar signaler
+
+---
+
+🗳️ 3. Beslutsmotor & Röstning
+
+🧠 Decision Core
+- Samlar in beslut från agenter
+- Loggar, analyserar och skickar vidare till exekvering
+- RL-feedback till agenter baserat på utfall
+
+🗳️ Vote Engine
+- Hanterar oenighet mellan agenter
+- Röstning med viktning baserat på historisk träffsäkerhet
+- Meta-vote: agenter röstar på andra agenters röster
+- RL-belöning för röstprecision
+
+---
+
+📐 4. Position Sizing & Riskjustering
+
+📊 Sizing Engine
+- Beräknar positionstorlek baserat på strategi, risk, sentiment
+- Använder fasta och adaptiva sizing-profiler
+- RL-träning för optimal sizing
+- Mutation av sizinglogik
+
+⚠️ Risk Mapper
+- Visualiserar risk per symbol, agent och portfölj
+- Integrerar sizing, sentiment och regimdata
+
+---
+
+⏱️ 5. Tidsramar & Spanintelligens
+
+⏳ Timespan Engine
+- Skapar och utvärderar fasta och adaptiva spans
+- RL-träning för bästa span per symbol
+- Hybridisering av spans för regimväxling
+
+🌀 Multi-Timeframe Fusion
+- Jämför signaler över spans
+- Validerar beslut mot historik och agentkonsensus
+
+---
+
+📊 6. Portföljhantering & Mutation
+
+🧬 Portfolio Engine
+- Skapar och kör portföljer med olika agentkombinationer
+- Muterar portföljer baserat på RL-feedback
+- Kör simuleringar och livebeslut
+
+📈 Portfolio Comparator
+- Jämför portföljer mot varandra
+- Identifierar bästa komponenter
+- Skapar meta-portföljer
+
+---
+
+🧬 7. Strategi- & Agentmutation
+
+🔄 Evolution Engine
+- Muterar strategier, agenter och portföljer
+- RL-belöning för förbättring
+- Regimjustering och hybridisering
+
+🌱 Mutation Tracker
+- Spårar alla mutationer i systemet
+- Visualiserar generationsflöde och ursprung
+
+---
+
+🧠 8. Introspektion & Självlärande
+
+🧠 Self Critique
+- Automatisk sessiongranskning var 5:e minut
+- Identifierar fel och föreslår förbättringar
+- RL-feedback till agenter och strategier
+
+🧠 Symbol Memory
+- Lagrar beslut och utfall per symbol
+- Spårar agentprecision och signalstyrka
+
+---
+
+🧭 9. Ontologi & Agentanalys
+
+🧭 Agent Spectrum
+- Visualiserar agenters ontologiska dimensioner
+- Spårar rörelse mellan emotionell, strukturell, nätverk, m.fl.
+
+🔄 Agent Lifecycle
+- Spårar agentens födelse, mutation, hybridisering och pensionering
+- Kopplar till mutationer och RL-belöning
+
+🤝 Synergy Matrix
+- Identifierar samverkan och konflikt mellan agenter
+- Visualiserar hybridpotential och meta-agentrelationer
+
+🧠 Meta Agent Governor
+- Skapar agentråd för olika marknadsregimer
+- Prioriterar agenter baserat på träffsäkerhet och samverkan
+
+---
+
+📖 10. Visualisering & Narrativ
+
+📖 Narrative Engine
+- Skapar en berättelse om systemets beslut och utveckling
+- Loggar händelser som narrativ med agentkommentarer
+
+🗺️ System Flow
+- Visuell karta över hela systemets modulflöde
+- Dynamisk uppdatering av aktiva komponenter
+
+📊 Dash-paneler
+- 15 interaktiva paneler för beslut, agenter, portföljer, mutationer, risk, narrativ m.m.
+- Realtidsuppdatering var 2–5 sekunder
+- Bootstrap Cerulean-tema, mobilanpassat
+
+---
+
+┌────────────────────────────┐
+                            │      DATA STREAM           │
+                            │  WebSocket + REST polling  │
+                            └────────────┬──────────────┘
+                                         │
+                                         ▼
+                            ┌────────────────────────────┐
+                            │      TRENDING POOL          │
+                            │  Symbolranking & filtrering │
+                            └────────────┬──────────────┘
+                                         │
+                                         ▼
+                            ┌────────────────────────────┐
+                            │       AGENT LAYER           │
+                            │  17 agenter analyserar data │
+                            └────────────┬──────────────┘
+                                         │
+                                         ▼
+                            ┌────────────────────────────┐
+                            │       FUSION ENGINE         │
+                            │  Multi-span signalvalidering│
+                            └────────────┬──────────────┘
+                                         │
+                                         ▼
+                            ┌────────────────────────────┐
+                            │       DECISION CORE         │◄────────────────────────────────────────────┐
+                            │  Nav för beslut, routing     │                                             │
+                            └────────────┬────────────────┘                                             │
+                                         │                                                              │
+             ┌───────────────────────────┼────────────────────────────┐                                 │
+             ▼                           ▼                            ▼                                 │
+┌────────────────────┐     ┌────────────────────┐        ┌────────────────────────┐                    │
+│     VOTE ENGINE     │     │     SIZING ENGINE   │        │     TIMESPAN ENGINE     │                    │
+│  Röstning & viktning│     │ RL-optimerad sizing│        │ RL-träning av spans     │                    │
+└─────────┬───────────┘     └─────────┬───────────┘        └────────────┬───────────┘                    │
+          │                           │                                │                                │
+          ▼                           ▼                                ▼                                │
+┌────────────────────┐     ┌────────────────────┐        ┌────────────────────────┐                    │
+│   EXECUTION MONITOR │     │   RISK MAPPER       │        │   PORTFOLIO ENGINE      │                    │
+│ Kör trades/loggar   │     │ Risk per symbol     │        │ Multiportföljhantering  │                    │
+└─────────┬───────────┘     └─────────┬───────────┘        └────────────┬───────────┘                    │
+          │                           │                                │                                │
+          ▼                           ▼                                ▼                                │
+┌────────────────────┐     ┌────────────────────┐        ┌────────────────────────┐                    │
+│   SYMBOL MEMORY     │     │   SELF CRITIQUE     │        │ PORTFOLIO COMPARATOR   │                    │
+│ Historik & precision│     │ Felanalys & feedback│        │ Jämför & optimerar     │                    │
+└─────────┬───────────┘     └─────────┬───────────┘        └────────────┬───────────┘                    │
+          │                           │                                │                                │
+          ▼                           ▼                                ▼                                │
+┌────────────────────┐     ┌────────────────────┐        ┌────────────────────────┐                    │
+│   EVOLUTION ENGINE  │     │   MUTATION TRACKER  │        │   META AGENT GOVERNOR   │                    │
+│ Muterar agenter     │     │ Spårar förändringar │        │ Agentprioritering       │                    │
+└─────────┬───────────┘     └─────────┬───────────┘        └────────────┬───────────┘                    │
+          │                           │                                │                                │
+          ▼                           ▼                                ▼                                │
+┌────────────────────┐     ┌────────────────────┐        ┌────────────────────────┐                    │
+│  AGENT LIFECYCLE    │     │   SYNERGY MATRIX    │        │   AGENT SPECTRUM        │                    │
+│ Födelse → pension   │     │ Samverkan & konflikt│        │ Ontologisk rörelse      │                    │
+└─────────┬───────────┘     └─────────┬───────────┘        └────────────┬───────────┘                    │
+          │                           │                                │                                │
+          ▼                           ▼                                ▼                                │
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      NARRATIVE ENGINE                                                 │
+│                          Händelseflöde & systemberättelse                                             │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                         │
+                                         ▼
+                            ┌────────────────────────────┐
+                            │     SYSTEM FLOW MAP        │
+                            │  Visuell modulöversikt     │
+                            └────────────────────────────┘
