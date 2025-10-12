@@ -160,14 +160,21 @@ class RiskMapper:
                     risk2 = self.risk_matrix[sym2]['base_risk']
                     total_risk += 2 * corr * risk1 * risk2
         
-        total_risk = math.sqrt(max(0, total_risk))
+        negative_risk_encountered = False
+        if total_risk < 0:
+            logger.warning(f"Negative portfolio risk encountered ({total_risk:.6f}) due to strong negative correlations. Setting risk to 0.")
+            negative_risk_encountered = True
+            total_risk = 0.0
+        else:
+            total_risk = math.sqrt(total_risk)
         
         portfolio_risk = {
             'total_risk': total_risk,
             'risk_pct': total_risk * 100,
             'within_limits': total_risk <= self.max_portfolio_risk,
             'positions': len(positions),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
+            'negative_risk_encountered': negative_risk_encountered
         }
         
         self.risk_history.append(portfolio_risk)
