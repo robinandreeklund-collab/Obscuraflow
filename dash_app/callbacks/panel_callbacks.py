@@ -23,7 +23,8 @@ def register_panel_callbacks(app):
     # Lista över alla panel intervals som kan trigga uppdateringar
     # Dessa måste matcha interval-IDs i panelerna
     panel_intervals = [
-        'decision-core-panel-interval',
+        'decision-core-enhanced-interval',  # Enhanced decision core uses this ID
+        'decision-core-interval',           # Original decision core  
         'vote-panel-interval',
         'sizing-panel-interval',
         'timespan-panel-interval',
