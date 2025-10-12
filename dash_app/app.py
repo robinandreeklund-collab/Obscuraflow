@@ -32,6 +32,10 @@ app = Dash(
 # Server för deployment
 server = app.server
 
+# Import and register panel auto-update callbacks
+from dash_app.callbacks.panel_callbacks import register_panel_callbacks
+register_panel_callbacks(app)
+
 # Huvudlayout
 app.layout = dbc.Container(
     [
