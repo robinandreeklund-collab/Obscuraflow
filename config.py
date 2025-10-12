@@ -50,7 +50,8 @@ DEFAULT_SYMBOLS = [
 # ============================================================================
 
 # Auto-refresh interval for panels (milliseconds)
-AUTO_REFRESH_INTERVAL = 1000
+# Can be overridden by environment variable AUTO_REFRESH_INTERVAL
+AUTO_REFRESH_INTERVAL = int(os.environ.get("AUTO_REFRESH_INTERVAL", "5000"))
 
 # Chart theme
 CHART_THEME = 'plotly_dark'
