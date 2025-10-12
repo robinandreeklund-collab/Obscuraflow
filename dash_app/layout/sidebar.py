@@ -123,6 +123,26 @@ def create_sidebar():
             
             html.Hr(style={'borderColor': '#374151', 'marginTop': '20px'}),
             
+            # Data Source Toggle
+            html.Div(
+                [
+                    html.Div("Data Source", style={'fontSize': '12px', 'color': '#9ca3af', 'marginBottom': '8px', 'textAlign': 'center'}),
+                    dbc.RadioItems(
+                        id='data-source-toggle',
+                        options=[
+                            {'label': ' Mock Data', 'value': 'mock'},
+                            {'label': ' Live API', 'value': 'live'}
+                        ],
+                        value='mock',
+                        inline=False,
+                        style={'fontSize': '13px', 'color': '#e5e7eb'}
+                    )
+                ],
+                style={'padding': '10px', 'backgroundColor': '#1a1f3a', 'borderRadius': '8px', 'marginTop': '10px'}
+            ),
+            
+            html.Hr(style={'borderColor': '#374151', 'marginTop': '15px'}),
+            
             # Status indicator
             html.Div(
                 [
@@ -131,10 +151,11 @@ def create_sidebar():
                         [
                             html.Span("● ", style={'color': '#10b981'}),
                             html.Span("Active", style={'color': '#10b981', 'fontSize': '14px'})
-                        ]
+                        ],
+                        id='system-status-indicator'
                     )
                 ],
-                style={'textAlign': 'center', 'marginTop': '20px'}
+                style={'textAlign': 'center', 'marginTop': '15px'}
             )
         ],
         className="sidebar",
