@@ -51,3 +51,4 @@
 {"timestamp": "2025-10-13T14:27:00.260223", "type": "Module Toggle", "component": "DecisionCore", "old_value": "True", "new_value": "True"}
 {"timestamp": "2025-10-13T14:27:03.355702", "type": "Module Toggle", "component": "TrendingPool", "old_value": "True", "new_value": "True"}
 {"timestamp": "2025-10-13T14:27:42.097851", "type": "Module Toggle", "component": "TrendingPool", "old_value": "True", "new_value": "True"}
+{"timestamp": "2025-10-13T15:17:35.012116", "type": "Agent Toggle", "component": "momentum_agent", "old_value": "True", "new_value": "True"}
