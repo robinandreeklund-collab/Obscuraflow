@@ -27,9 +27,10 @@ def create_panel():
     from modules.decision_core import DecisionCore
     from modules.data_stream.data_stream import get_data_stream
     from dash_app.config import USE_MOCK_DATA
+    from datetime import datetime
     
-    # Initialize with configurable data source
-    decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4)
+    # Initialize with live agents
+    decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4, use_live_data=True)
     stats = decision_core.get_stats()
     
     # Get market data using DataStream
@@ -37,14 +38,17 @@ def create_panel():
     market_summary = data_stream.get_market_summary()
     quotes = market_summary['quotes']
     
+    # Get agent activity for real decisions
+    agent_activity = decision_core.get_agent_activity()
+    
     header = create_header(
         "Decision Core - Enhanced",
         "Agentbeslut, konsensusanalys, marknadsöversikt och beslutsrouting",
         "fas fa-brain"
     )
     
-    # Create price change chart
-    symbols = list(quotes.keys())[:8]
+    # Create price change chart - visa alla aktiva aktier
+    symbols = list(quotes.keys())[:50]  # Visa upp till 50 symboler
     price_changes = [quotes[s].get('dp', 0) for s in symbols]
     
     price_chart = go.Figure()
@@ -57,12 +61,13 @@ def create_panel():
         textposition='outside'
     ))
     price_chart.update_layout(
-        title="Market Price Changes (%)",
+        title="Market Price Changes (%) - All Active Stocks",
         plot_bgcolor='#1a1f3a',
         paper_bgcolor='#151932',
         font=dict(color='#e5e7eb'),
         showlegend=False,
-        height=300
+        height=400,  # Increased height for more symbols
+        xaxis=dict(tickangle=-45)  # Angle labels for readability
     )
     
     # Create volume chart
@@ -82,12 +87,13 @@ def create_panel():
         textposition='outside'
     ))
     volume_chart.update_layout(
-        title="Trading Volume",
+        title="Trading Volume - All Active Stocks",
         plot_bgcolor='#1a1f3a',
         paper_bgcolor='#151932',
         font=dict(color='#e5e7eb'),
         showlegend=False,
-        height=300
+        height=400,  # Increased height for more symbols
+        xaxis=dict(tickangle=-45)  # Angle labels for readability
     )
     
     # Create detailed market table
@@ -104,18 +110,52 @@ def create_panel():
             f"{change_icon} {quote.get('dp', 0):+.2f}%"
         ])
     
-    # Build consensus analysis table from available symbols
-    import random
+    # Build consensus analysis table from agent decisions
     consensus_table_rows = []
-    available_symbols = list(quotes.keys())[:6]  # Use first 6 available symbols
-    for sym in available_symbols:
-        quote = quotes.get(sym, {})
-        agents_voting = f"{random.randint(4, 6)}/6"
-        consensus = random.choice(['BUY', 'SELL', 'HOLD'])
-        confidence = f"{random.uniform(65, 95):.1f}%"
-        status = '✅ Strong' if random.random() > 0.3 else '⚠️ Moderate'
+    symbol_decisions = {}
+    
+    # Collect all decisions by symbol
+    for agent_id, activity in agent_activity.items():
+        for decision_dict in activity.get('decisions', []):
+            symbol = decision_dict.get('symbol')
+            if symbol:
+                if symbol not in symbol_decisions:
+                    symbol_decisions[symbol] = []
+                symbol_decisions[symbol].append(decision_dict)
+    
+    # Analyze consensus for each symbol - show all symbols with decisions
+    for symbol, decisions in symbol_decisions.items():  # All symbols, not just top 6
+        quote = quotes.get(symbol, {})
+        
+        # Count votes
+        buy_votes = sum(1 for d in decisions if d.get('decision', '').lower() == 'buy')
+        sell_votes = sum(1 for d in decisions if d.get('decision', '').lower() == 'sell')
+        hold_votes = sum(1 for d in decisions if d.get('decision', '').lower() == 'hold')
+        total_votes = len(decisions)
+        
+        agents_voting = f"{total_votes}/{len(agent_activity)}"  # Show actual agent count
+        
+        # Determine consensus
+        if buy_votes > sell_votes and buy_votes > hold_votes:
+            consensus = 'BUY'
+            max_votes = buy_votes
+        elif sell_votes > buy_votes and sell_votes > hold_votes:
+            consensus = 'SELL'
+            max_votes = sell_votes
+        else:
+            consensus = 'HOLD'
+            max_votes = hold_votes
+        
+        # Calculate average confidence
+        avg_confidence = sum(d.get('confidence', 0) for d in decisions) / total_votes
+        confidence = f"{avg_confidence:.1f}%"
+        
+        # Determine status based on agreement
+        agreement = max_votes / total_votes
+        status = '✅ Strong' if agreement > 0.6 else '⚠️ Moderate'
+        
         consensus_table_rows.append([
-            sym,
+            symbol,
             f"${quote.get('c', 0):.2f}",
             agents_voting,
             consensus,
@@ -123,24 +163,41 @@ def create_panel():
             status
         ])
     
-    # Fallback if no data
+    # Fallback if no consensus data
     if not consensus_table_rows:
-        consensus_table_rows = [['N/A', '$0.00', '0/6', 'HOLD', '0.0%', '⚠️ No Data']]
+        consensus_table_rows = [['N/A', '$0.00', '0/6', 'HOLD', '0.0%', '⏳ Waiting for agents']]
     
-    # Build recent agent decisions table from available symbols
-    agent_names = ['MomentumAgent', 'ReversalAgent', 'EchoAgent', 'FractalisAgent', 'VoxAgent', 'GenesisAgent']
+    # Build recent agent decisions table from actual decisions - show all active agents
     recent_decisions_rows = []
-    decision_symbols = list(quotes.keys())[:6]  # Use first 6 available symbols
-    for i, agent in enumerate(agent_names):
-        if i < len(decision_symbols):
-            sym = decision_symbols[i]
-            decision = random.choice(['🟢 BUY', '🔴 SELL', '🟡 HOLD'])
-            confidence = f"{random.uniform(70, 95):.1f}%"
-            recent_decisions_rows.append([agent, sym, decision, confidence])
     
-    # Fallback if no data
+    # Get recent decisions from each agent (all agents, not just top 6)
+    for agent_id, activity in sorted(agent_activity.items(), key=lambda x: x[1]['decision_count'], reverse=True):
+        decisions_list = activity.get('decisions', [])
+        if decisions_list:
+            # Get most recent decision
+            latest = decisions_list[-1]
+            symbol = latest.get('symbol', 'N/A')
+            decision_type = latest.get('decision', 'hold').upper()
+            confidence = latest.get('confidence', 0)
+            
+            # Format decision with icon
+            if decision_type == 'BUY':
+                decision_display = '🟢 BUY'
+            elif decision_type == 'SELL':
+                decision_display = '🔴 SELL'
+            else:
+                decision_display = '🟡 HOLD'
+            
+            recent_decisions_rows.append([
+                agent_id.replace('_agent', '').replace('_', ' ').title(),
+                symbol,
+                decision_display,
+                f"{confidence:.1f}%"
+            ])
+    
+    # Fallback if no recent decisions
     if not recent_decisions_rows:
-        recent_decisions_rows = [['N/A', 'N/A', '🟡 HOLD', '0.0%']]
+        recent_decisions_rows = [['Initializing', 'N/A', '🟡 HOLD', '0.0%']]
     
     content = dbc.Container([
         # Top Metrics Row

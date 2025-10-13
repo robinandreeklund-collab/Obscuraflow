@@ -43,7 +43,7 @@ def create_panel():
     portfolio_engine = PortfolioEngine(initial_capital=INITIAL_CAPITAL)
     
     # Initialize Decision Core to get agent decisions
-    decision_core = DecisionCore(min_confidence=50.0, generate_sample_decisions=True)
+    decision_core = DecisionCore(min_confidence=50.0, use_live_data=True)
     
     # Get portfolio stats
     try:
@@ -71,15 +71,19 @@ def create_panel():
     decision_stats = decision_core.get_stats()
     agent_activity = decision_core.get_agent_activity()
     
+    # Track positions by symbol with entry price and size
+    # In production, this would be stored in a database or portfolio engine state
+    open_positions = {}  # symbol -> {'entry_price': price, 'size': size, 'agent': agent_id, 'timestamp': ts}
+    
     # Convert decisions to simulated trades (showing decision flow → execution)
     # This demonstrates the complete pipeline from agent decision to portfolio execution
     recent_trades = []
-    positions_data = []
     agent_contribution = []
     
-    # Track agent contributions
+    # Track agent contributions - separate realized and unrealized
     agent_trade_counts = {}
-    agent_pnl = {}
+    agent_realized_pnl = {}  # P&L from closed positions
+    agent_unrealized_pnl = {}  # P&L from open positions
     
     # Process each decision and create trade entries
     for agent_id, activity in agent_activity.items():
@@ -102,8 +106,9 @@ def create_panel():
             size = round(0.05 + (confidence / 100) * 0.15, 3)  # Size based on confidence
             vote_score = round(confidence / 100, 2)
             
-            # Simulate execution latency based on decision complexity
-            latency = random.randint(15, 85)
+            # Calculate execution latency based on decision complexity
+            # In production, this would come from actual execution system
+            latency = int(15 + (1 - vote_score) * 70)  # Lower confidence = higher latency
             
             # Determine regime based on market conditions
             regime = 'bull' if current_price > 100 else 'bear' if current_price < 100 else 'neutral'
@@ -124,63 +129,101 @@ def create_panel():
             # Track agent contributions
             if agent_id not in agent_trade_counts:
                 agent_trade_counts[agent_id] = 0
-                agent_pnl[agent_id] = 0.0
+                agent_realized_pnl[agent_id] = 0.0
             
             agent_trade_counts[agent_id] += 1
             
-            # Calculate actual P&L based on price movement (entry price stored in decision metadata)
-            # For BUY: P&L = (current_price - entry_price) * size * 100
-            # For SELL: P&L is realized at execution
-            entry_price_for_pnl = decision_dict.get('metadata', {}).get('entry_price', current_price)
-            actual_current_price = quotes.get(symbol, {}).get('c', current_price)
-            
+            # Handle position tracking
             if action == 'BUY':
-                # Calculate unrealized P&L for BUY positions
-                pnl_impact = (actual_current_price - entry_price_for_pnl) * size * 100
-            else:  # SELL
-                # For SELL, P&L is already realized (difference from previous entry)
-                pnl_impact = (entry_price_for_pnl - decision_dict.get('metadata', {}).get('previous_price', entry_price_for_pnl)) * size * 100
-            
-            agent_pnl[agent_id] += pnl_impact
-            
-            # If BUY decision, add to positions
-            if action == 'BUY':
-                # Use actual market price from DataStream (no simulation)
-                entry_price = current_price
-                unrealized = (actual_current_price - entry_price) * size * 100
-                
-                positions_data.append([
-                    symbol,
-                    f"${actual_current_price:.2f}",  # Use actual live price
-                    size,
-                    f"${entry_price:.2f}",
-                    f"${unrealized:+.2f}",
-                    agent_id,
-                    decision_dict.get('metadata', {}).get('strategy', 'MOMENTUM'),
-                    f"${confidence:.0f}%"
-                ])
+                # Open or add to position
+                if symbol not in open_positions:
+                    open_positions[symbol] = {
+                        'entry_price': current_price,
+                        'size': size,
+                        'agent': agent_id,
+                        'timestamp': timestamp,
+                        'strategy': decision_dict.get('metadata', {}).get('strategy', 'MOMENTUM')
+                    }
+                else:
+                    # Average down/up the position
+                    existing = open_positions[symbol]
+                    total_size = existing['size'] + size
+                    avg_price = (existing['entry_price'] * existing['size'] + current_price * size) / total_size
+                    open_positions[symbol]['entry_price'] = avg_price
+                    open_positions[symbol]['size'] = total_size
+            elif action == 'SELL':
+                # Close or reduce position
+                if symbol in open_positions:
+                    position = open_positions[symbol]
+                    # Calculate realized P&L
+                    pnl_impact = (current_price - position['entry_price']) * min(size, position['size']) * 100
+                    agent_realized_pnl[agent_id] += pnl_impact
+                    
+                    # Reduce or close position
+                    if size >= position['size']:
+                        del open_positions[symbol]
+                    else:
+                        open_positions[symbol]['size'] -= size
     
-    # Build agent contribution table
-    for agent_id in sorted(agent_trade_counts.keys(), key=lambda x: agent_pnl.get(x, 0), reverse=True):
-        trades = agent_trade_counts[agent_id]
-        pnl = agent_pnl[agent_id]
-        precision = random.uniform(65, 92)  # Would come from Self-Critique in real system
-        risk = random.uniform(2, 15)
+    # Build current positions table from tracked positions
+    positions_data = []
+    total_unrealized_pnl = 0.0
+    
+    for symbol, position in open_positions.items():
+        current_price = quotes.get(symbol, {}).get('c', position['entry_price'])
+        entry_price = position['entry_price']
+        size = position['size']
+        
+        # Calculate unrealized P&L for open positions
+        unrealized_pnl = (current_price - entry_price) * size * 100
+        total_unrealized_pnl += unrealized_pnl
+        
+        # Track unrealized P&L per agent
+        agent_id = position['agent']
+        if agent_id not in agent_unrealized_pnl:
+            agent_unrealized_pnl[agent_id] = 0.0
+        agent_unrealized_pnl[agent_id] += unrealized_pnl
+        
+        positions_data.append([
+            symbol,
+            f"${current_price:.2f}",
+            size,
+            f"${entry_price:.2f}",
+            f"${unrealized_pnl:+.2f}",
+            agent_id,
+            position.get('strategy', 'MOMENTUM'),
+            f"{((current_price - entry_price) / entry_price * 100):+.1f}%"
+        ])
+    
+    # Build agent contribution table - show ALL active agents
+    all_agent_ids = set(agent_activity.keys())  # All agents that have been active
+    
+    for agent_id in sorted(all_agent_ids, key=lambda x: agent_realized_pnl.get(x, 0) + agent_unrealized_pnl.get(x, 0), reverse=True):
+        trades = agent_trade_counts.get(agent_id, 0)
+        realized_pnl = agent_realized_pnl.get(agent_id, 0.0)
+        unrealized_pnl = agent_unrealized_pnl.get(agent_id, 0.0)
+        total_agent_pnl = realized_pnl + unrealized_pnl
+        
+        # Precision and risk metrics would come from Self-Critique module in production
+        # For now, derive from actual performance data
+        precision = min(95.0, 65.0 + (total_agent_pnl / max(trades, 1)) * 2) if total_agent_pnl > 0 else 50.0
+        risk = max(2.0, min(15.0, 10.0 - (total_agent_pnl / 1000)))  # Lower risk for profitable agents
         status = '🟢 Active' if trades > 0 else '⚪ Idle'
         
         agent_contribution.append([
             agent_id,
             trades,
-            f"${pnl:+.2f}",
+            f"${total_agent_pnl:+.2f}",
             f"{precision:.1f}%",
             f"{risk:.1f}%",
             status
         ])
     
-    # Calculate portfolio metrics based on positions
-    total_pnl = sum(agent_pnl.values())
+    # Calculate portfolio metrics based on actual tracked positions
+    total_realized_pnl = sum(agent_realized_pnl.values())
+    total_pnl = total_realized_pnl + total_unrealized_pnl
     total_value = INITIAL_CAPITAL + total_pnl
-    pnl_percent = (total_pnl / INITIAL_CAPITAL) * 100 if total_value > 0 else 0.0
+    pnl_percent = (total_pnl / INITIAL_CAPITAL) * 100 if INITIAL_CAPITAL > 0 else 0.0
     
     # Calculate risk metrics
     total_position_value = sum([float(p[2]) * 100 for p in positions_data])  # size * price
@@ -188,7 +231,7 @@ def create_panel():
         'total_risk': (total_position_value / total_value) * 100 if total_value > 0 else 0.0,
         'max_drawdown': abs(min(0, total_pnl)) / INITIAL_CAPITAL * 100,
         'sharpe_ratio': (total_pnl / INITIAL_CAPITAL) / 0.15 if total_pnl > 0 else 0.0,  # Simplified
-        'win_rate': (len([p for p in agent_pnl.values() if p > 0]) / len(agent_pnl)) * 100 if agent_pnl else 0.0
+        'win_rate': (len([p for p in agent_realized_pnl.values() if p > 0]) / len(agent_realized_pnl)) * 100 if agent_realized_pnl else 0.0
     }
     
     # Create PnL chart with actual data
@@ -246,7 +289,7 @@ def create_panel():
                                  style={'backgroundColor': '#151932', 'color': '#00d9ff', 'fontWeight': 'bold'}),
                     dbc.CardBody([
                         create_data_table(
-                            ['Symbol', 'Current Price', 'Size', 'Entry Price', 'Unrealized P&L', 'Agent', 'Strategy', 'Confidence'],
+                            ['Symbol', 'Current Price', 'Size', 'Entry Price', 'Unrealized P&L', 'Agent', 'Strategy', 'Return %'],
                             positions_data
                         )
                     ])

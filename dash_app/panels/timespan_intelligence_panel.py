@@ -23,8 +23,8 @@ def create_panel():
     """
     from modules.timespan_engine import TimespanEngine
     from modules.data_stream.data_stream import get_data_stream
+    from modules.decision_core import DecisionCore
     from dash_app.config import USE_MOCK_DATA
-    import random
     
     timespan = TimespanEngine()
     stats = timespan.get_stats()
@@ -34,9 +34,38 @@ def create_panel():
     market_summary = data_stream.get_market_summary()
     quotes = market_summary['quotes']
     
-    # Build convergence analysis data from available symbols
-    convergence_symbols = list(quotes.keys())[:5]  # Use first 5 available symbols
-    convergence_scores = [round(random.uniform(0.65, 0.95), 2) for _ in convergence_symbols]
+    # Get agent decisions for convergence analysis
+    decision_core = DecisionCore(use_live_data=True)
+    agent_activity = decision_core.get_agent_activity()
+    
+    # Build convergence analysis from actual agent consensus
+    convergence_symbols = []
+    convergence_scores = []
+    
+    # Collect decisions by symbol
+    symbol_decisions = {}
+    for agent_id, activity in agent_activity.items():
+        for decision_dict in activity.get('decisions', []):
+            symbol = decision_dict.get('symbol')
+            if symbol:
+                if symbol not in symbol_decisions:
+                    symbol_decisions[symbol] = []
+                symbol_decisions[symbol].append(decision_dict)
+    
+    # Calculate convergence score for each symbol based on agent agreement
+    for symbol, decisions in list(symbol_decisions.items())[:10]:  # Top 10 symbols
+        if len(decisions) > 1:
+            # Count decision types
+            buy_count = sum(1 for d in decisions if d.get('decision', '').lower() == 'buy')
+            sell_count = sum(1 for d in decisions if d.get('decision', '').lower() == 'sell')
+            hold_count = sum(1 for d in decisions if d.get('decision', '').lower() == 'hold')
+            total = len(decisions)
+            
+            # Convergence score is the agreement level (highest vote count / total)
+            max_agreement = max(buy_count, sell_count, hold_count) / total
+            
+            convergence_symbols.append(symbol)
+            convergence_scores.append(round(max_agreement, 2))
     
     # Fallback if no data
     if not convergence_symbols:

@@ -41,30 +41,51 @@ def create_panel():
     data_mode = "Live API" if not USE_MOCK_DATA else "Mock Data"
     
     # Get actual agent decisions from DecisionCore
-    decision_core = DecisionCore(use_live_data=True, generate_sample_decisions=False)
+    decision_core = DecisionCore(use_live_data=True)
     agent_activity = decision_core.get_agent_activity()
     
     # Build recent votes table from actual agent decisions
     recent_votes_rows = []
-    # Convert dict to list if needed (DecisionCore returns dict)
-    activity_list = list(agent_activity.values()) if isinstance(agent_activity, dict) else agent_activity
-    for decision in activity_list[:15]:  # Last 15 decisions
-        timestamp = decision.get('timestamp', datetime.now().strftime('%H:%M:%S'))
+    # agent_activity is a dict mapping agent_id -> {decision_count, avg_confidence, decisions, status}
+    # We need to flatten all decisions across all agents
+    all_decisions = []
+    for agent_id, activity in agent_activity.items():
+        for decision_dict in activity.get('decisions', []):
+            # Add agent_id to each decision for easier access
+            decision_dict['agent_id'] = agent_id
+            all_decisions.append(decision_dict)
+    
+    # Sort by timestamp (most recent first) and take last 15
+    all_decisions.sort(key=lambda d: d.get('timestamp', ''), reverse=True)
+    
+    for decision in all_decisions[:15]:  # Last 15 decisions
+        # Extract timestamp
+        timestamp_str = decision.get('timestamp', datetime.now().isoformat())
+        try:
+            timestamp = datetime.fromisoformat(timestamp_str).strftime('%H:%M:%S')
+        except:
+            timestamp = datetime.now().strftime('%H:%M:%S')
+        
         symbol = decision.get('symbol', 'N/A')
         agent = decision.get('agent_id', 'N/A')
-        action = decision.get('action', 'HOLD')
+        action = decision.get('decision', 'hold').upper()  # 'decision' not 'action'
         vote_display = f"🟢 {action}" if action == 'BUY' else f"🔴 {action}" if action == 'SELL' else f"⚪ {action}"
-        weight = f"{decision.get('weight', 1.0):.2f}"
-        confidence = f"{int(decision.get('confidence', 0) * 100)}%"
-        # Outcome based on actual decision data if available
-        outcome = decision.get('outcome', '⏳ Pending')
-        pnl_val = decision.get('pnl', 0)
-        pnl = f"+${pnl_val:.2f}" if pnl_val > 0 else f"-${abs(pnl_val):.2f}" if pnl_val < 0 else '$0.00'
+        
+        # Use default weight of 1.0 (VoteEngine tracks weights separately)
+        weight = "1.00"
+        
+        # Confidence is 0-100 scale already
+        confidence = f"{int(decision.get('confidence', 0))}%"
+        
+        # Outcome and PnL would be tracked separately in portfolio engine
+        outcome = '⏳ Pending'
+        pnl = '$0.00'
+        
         recent_votes_rows.append([timestamp, symbol, agent, vote_display, weight, confidence, outcome, pnl])
     
-    # Fallback if no decisions available
+    # Fallback if no decisions available (agents haven't analyzed yet)
     if not recent_votes_rows:
-        recent_votes_rows = [[datetime.now().strftime('%H:%M:%S'), 'N/A', 'N/A', '⚪ HOLD', '1.0', '0%', '⏳ Pending', '$0.00']]
+        recent_votes_rows = [[datetime.now().strftime('%H:%M:%S'), 'N/A', 'Initializing', '⚪ HOLD', '1.00', '0%', '⏳ Waiting for live data', '$0.00']]
     
     # Build conflict resolution table from actual conflicts (if tracked)
     conflict_rows = []
@@ -95,27 +116,33 @@ def create_panel():
     # Generate weight evolution chart from actual agent history
     timestamps = [(datetime.now() - timedelta(hours=24-i)).strftime('%H:00') for i in range(24)]
     
-    # Get agent weights from historical decisions (last 24 hours)
+    # Get agent weights from VoteEngine if available
     agent_weight_history = {}
-    for decision in activity_list:
-        agent_id = decision.get('agent_id', 'unknown')
-        if agent_id not in agent_weight_history:
-            agent_weight_history[agent_id] = []
-        agent_weight_history[agent_id].append(decision.get('weight', 1.0))
+    if hasattr(vote_engine, 'agent_weights') and vote_engine.agent_weights:
+        # Use current weights from VoteEngine - show all agents
+        for agent_id, weight in vote_engine.agent_weights.items():
+            # Create a simple trend line (in production, would track history)
+            agent_weight_history[agent_id] = [weight] * 24
+    else:
+        # Use agent activity data - show all agents
+        for agent_id, activity in agent_activity.items():
+            # Use average confidence as a proxy for weight evolution
+            avg_conf = activity.get('avg_confidence', 50) / 100.0
+            agent_weight_history[agent_id] = [avg_conf] * 24
     
-    # Create weight evolution lines for top agents
+    # Create weight evolution lines for active agents
     weight_evolution = go.Figure()
-    colors = {'momentum_agent': '#00d9ff', 'reversal_agent': '#7c3aed', 'breakout_agent': '#10b981',
-              'echo_agent': '#f59e0b', 'vox_agent': '#ef4444', 'fractalis_agent': '#8b5cf6'}
+    colors = {
+        'momentum_agent': '#00d9ff', 'reversal_agent': '#7c3aed', 'breakout_agent': '#10b981',
+        'echo_agent': '#f59e0b', 'vox_agent': '#ef4444', 'fractalis_agent': '#8b5cf6',
+        'hybrid_agent': '#3b82f6', 'myco_agent': '#14b8a6', 'obscura_agent': '#6366f1',
+        'mirage_agent': '#ec4899', 'sentio_agent': '#f97316', 'reflexion_agent': '#a855f7',
+        'dimensio_agent': '#06b6d4', 'symbio_agent': '#84cc16', 'genesis_agent': '#eab308',
+        'architectum_agent': '#f43f5e'
+    }
     
-    for agent_id, weights in list(agent_weight_history.items())[:6]:  # Top 6 agents
-        # Pad or interpolate to 24 points
-        if len(weights) > 24:
-            weights = weights[:24]
-        elif len(weights) < 24:
-            weights = weights + [weights[-1] if weights else 1.0] * (24 - len(weights))
-        
-        agent_name = agent_id.replace('_agent', '').capitalize()
+    for agent_id, weights in agent_weight_history.items():
+        agent_name = agent_id.replace('_agent', '').replace('_', ' ').title()
         weight_evolution.add_trace(go.Scatter(
             x=timestamps, y=weights, mode='lines+markers',
             name=agent_name, line=dict(color=colors.get(agent_id, '#9ca3af'), width=2)
@@ -133,44 +160,47 @@ def create_panel():
     )
     
     # Voting accuracy chart from actual agent performance
+    # Note: Outcome tracking is done by portfolio engine, not available here yet
+    # For now, use decision count and confidence as metrics
     agent_accuracies = {}
-    for decision in activity_list:
-        agent_id = decision.get('agent_id', 'unknown')
-        outcome = decision.get('outcome', '')
-        if agent_id not in agent_accuracies:
-            agent_accuracies[agent_id] = {'correct': 0, 'total': 0}
-        agent_accuracies[agent_id]['total'] += 1
-        if outcome == '✅ Correct':
-            agent_accuracies[agent_id]['correct'] += 1
+    for agent_id, activity in agent_activity.items():
+        decision_count = activity.get('decision_count', 0)
+        avg_confidence = activity.get('avg_confidence', 0)
+        agent_accuracies[agent_id] = {
+            'total': decision_count,
+            'avg_confidence': avg_confidence
+        }
     
-    # Calculate accuracy percentages
+    # Sort by decision count and get top agents
+    sorted_agents = sorted(agent_accuracies.items(), key=lambda x: x[1]['total'], reverse=True)
+    
+    # Create bar chart with confidence as proxy for accuracy (until outcome tracking is added)
     agent_names = []
-    accuracies = []
-    for agent_id, counts in agent_accuracies.items():
-        agent_names.append(agent_id.replace('_agent', '').capitalize())
-        accuracy = (counts['correct'] / counts['total'] * 100) if counts['total'] > 0 else 0
-        accuracies.append(accuracy)
+    confidence_scores = []
+    for agent_id, data in sorted_agents[:8]:  # Top 8 agents
+        agent_names.append(agent_id.replace('_agent', '').replace('_', ' ').title())
+        confidence_scores.append(data['avg_confidence'])
     
     # Fallback if no accuracy data
     if not agent_names:
-        agent_names = ['No Data']
-        accuracies = [0]
+        agent_names = ['Initializing']
+        confidence_scores = [0]
     
     accuracy_chart = go.Figure()
     accuracy_chart.add_trace(go.Bar(
-        x=agent_names, y=accuracies,
-        marker_color=['#10b981' if a > 70 else '#f59e0b' if a > 60 else '#ef4444' for a in accuracies],
-        text=[f"{a:.1f}%" for a in accuracies],
+        x=agent_names, y=confidence_scores,
+        marker_color=['#10b981' if c > 70 else '#f59e0b' if c > 60 else '#ef4444' for c in confidence_scores],
+        text=[f"{c:.1f}%" for c in confidence_scores],
         textposition='outside'
     ))
     accuracy_chart.update_layout(
-        title="Agent Voting Accuracy - Live Data",
+        title="Agent Confidence Scores - Live Data",
         plot_bgcolor='#1a1f3a',
         paper_bgcolor='#151932',
         font=dict(color='#e5e7eb'),
         showlegend=False,
         height=350,
-        yaxis=dict(title='Accuracy (%)', range=[0, 100])
+        yaxis=dict(title='Avg Confidence (%)', range=[0, 100])
     )
     
     content = dbc.Container([
@@ -178,8 +208,8 @@ def create_panel():
         dbc.Row([
             dbc.Col([
                 create_metric_card(
-                    "Total Votes (24h)",
-                    len(agent_activity),
+                    "Total Decisions (24h)",
+                    sum(activity.get('decision_count', 0) for activity in agent_activity.values()),
                     change=0,
                     icon="fas fa-check-circle"
                 )
@@ -202,8 +232,8 @@ def create_panel():
             ], width=12, lg=3, md=6),
             dbc.Col([
                 create_metric_card(
-                    "Success Rate",
-                    f"{sum(accuracies) / len(accuracies) if accuracies and accuracies[0] > 0 else 0:.1f}%",
+                    "Avg Confidence",
+                    f"{sum(confidence_scores) / len(confidence_scores) if confidence_scores and confidence_scores[0] > 0 else 0:.1f}%",
                     change=0,
                     icon="fas fa-trophy"
                 )
@@ -272,20 +302,17 @@ def create_panel():
                     dbc.CardHeader("🏆 Agent Performance Summary - Live Data", style={'backgroundColor': '#151932', 'color': '#00d9ff', 'fontWeight': 'bold'}),
                     dbc.CardBody([
                         create_data_table(
-                            ['Agent', 'Total Votes', 'Correct', 'Wrong', 'Accuracy', 'Avg Weight', 'Total P&L', 'Avg P&L/Trade'],
+                            ['Agent', 'Total Decisions', 'Avg Confidence', 'Status', 'Weight'],
                             [
                                 [
-                                    agent_id.replace('_agent', '').capitalize(),
-                                    str(counts['total']),
-                                    str(counts['correct']),
-                                    str(counts['total'] - counts['correct']),
-                                    f"{(counts['correct'] / counts['total'] * 100) if counts['total'] > 0 else 0:.1f}%",
-                                    f"{sum(agent_weight_history.get(agent_id, [1.0])) / len(agent_weight_history.get(agent_id, [1.0])):.2f}",
-                                    f"+${sum([d.get('pnl', 0) for d in activity_list if d.get('agent_id') == agent_id]):.2f}",
-                                    f"+${sum([d.get('pnl', 0) for d in activity_list if d.get('agent_id') == agent_id]) / counts['total'] if counts['total'] > 0 else 0:.2f}"
+                                    agent_id.replace('_agent', '').replace('_', ' ').title(),
+                                    str(data['total']),
+                                    f"{data['avg_confidence']:.1f}%",
+                                    '🟢 Active' if data['total'] > 0 else '⚪ Idle',
+                                    f"{agent_weight_history.get(agent_id, [1.0])[0]:.2f}"
                                 ]
-                                for agent_id, counts in list(agent_accuracies.items())[:8]
-                            ] if agent_accuracies else [['No Data', '0', '0', '0', '0%', '1.00', '$0', '$0']]
+                                for agent_id, data in sorted_agents[:8]
+                            ] if sorted_agents else [['Initializing', '0', '0%', '⚪ Starting', '1.00']]
                         )
                     ])
                 ], className="mb-3")
