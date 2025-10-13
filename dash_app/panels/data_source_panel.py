@@ -187,7 +187,23 @@ def create_panel():
         
         # Add connection status events
         if ws_connected:
-            connect_time = (now - timedelta(seconds=int(ws_uptime.split(':')[2]) if ':' in str(ws_uptime) else 60)).strftime('%H:%M:%S')
+            # Parse uptime to get seconds - handle different formats
+            try:
+                if ':' in str(ws_uptime):
+                    # Format: "H:MM:SS" or "H:MM:SS.microseconds"
+                    parts = str(ws_uptime).split(':')
+                    hours = int(parts[0])
+                    minutes = int(parts[1])
+                    seconds = float(parts[2])  # Use float to handle microseconds
+                    uptime_seconds = int(hours * 3600 + minutes * 60 + seconds)
+                else:
+                    # Assume it's a number (seconds as float or int)
+                    uptime_seconds = int(float(str(ws_uptime)))
+            except (ValueError, IndexError):
+                # Fallback if parsing fails
+                uptime_seconds = 60
+            
+            connect_time = (now - timedelta(seconds=uptime_seconds)).strftime('%H:%M:%S')
             ws_activity_rows.insert(0, [
                 connect_time,
                 '🔌 Connected',
