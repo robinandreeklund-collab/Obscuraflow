@@ -2,14 +2,36 @@
   "modules": {
     "DataStream": true,
     "TrendingPool": true,
-    "VoteEngine": true
+    "VoteEngine": true,
+    "Fusion": true,
+    "Sizing": true,
+    "PortfolioEngine": true,
+    "MutationTracker": true,
+    "SelfCritique": true,
+    "DecisionCore": true,
+    "TimespanEngine": true
   },
   "agents": {
-    "momentum_agent": true
+    "momentum_agent": true,
+    "reversal_agent": true,
+    "breakout_agent": true,
+    "hybrid_agent": true,
+    "genesis_agent": true,
+    "symbio_agent": true,
+    "dimensio_agent": true,
+    "reflexion_agent": true,
+    "sentio_agent": true,
+    "mirage_agent": true,
+    "obscura_agent": true,
+    "myco_agent": true,
+    "vox_agent": true,
+    "fractalis_agent": true,
+    "echo_agent": true,
+    "architectum_agent": true
   },
   "parameters": {
     "FUSION_THRESHOLD": 0.75,
     "USE_MOCK_DATA": false
   },
-  "last_updated": "2025-10-13T14:06:50.320526"
+  "last_updated": "2025-10-13T14:27:42.096710"
 }
