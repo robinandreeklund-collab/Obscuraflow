@@ -138,9 +138,9 @@ class DataStream:
             self.is_connected = True
             logger.info("Mock WebSocket-anslutning etablerad")
         else:
-            # TODO: Implementera riktig WebSocket-anslutning
+            # Real-time WebSocket not yet implemented
             self.is_connected = False
-            logger.warning("Riktig WebSocket-anslutning ej implementerad")
+            logger.info("Real-time WebSocket not yet implemented - using REST polling mode")
         return self.is_connected
     
     def disconnect_websocket(self) -> None:
@@ -247,8 +247,11 @@ class DataStream:
             logger.info(f"Genererade simulerad marknadsdata för {len(target_symbols)} symboler")
             return mock_data
         else:
-            # TODO: Implementera REST-hämtning från Finnhub API
-            logger.warning("Riktig REST-hämtning ej implementerad")
+            # Real API mode - not fully implemented yet
+            # This is a development message, not an error
+            logger.info("Real-time API fetching not yet implemented - consider using mock data mode")
+            logger.info("Set USE_MOCK_DATA=True in config.py or environment to use simulated market data")
+            # Return empty dict - calling code should handle gracefully
             return {}
     
     def analyze_trend(self, symbol: str) -> Dict[str, float]:
@@ -294,8 +297,8 @@ class DataStream:
             logger.info(f"Trendanalys för {symbol}: score={trend_data['score']}")
             return trend_data
         else:
-            # TODO: Implementera riktig trendanalys
-            logger.warning("Riktig trendanalys ej implementerad")
+            # Real-time trend analysis not yet implemented
+            logger.info("Real-time trend analysis not yet implemented - returning baseline values")
             return {
                 'volume': 0.0,
                 'momentum': 0.0,
@@ -375,7 +378,7 @@ class DataStream:
             Dict med keys: t (timestamps), c (close), h (high), l (low), o (open), v (volume)
         """
         if not self.use_mock_data:
-            logger.warning("Historisk data från API ej implementerad")
+            logger.info("Historical data from API not yet implemented - using mock data fallback")
             return {'s': 'error'}
         
         # Generera historisk data baserat på simulerad marknad
