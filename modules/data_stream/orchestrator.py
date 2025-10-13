@@ -16,6 +16,7 @@ from datetime import datetime
 
 from modules.data_stream.rest_batcher import RestBatcher
 from modules.data_stream.ws_handler import WebSocketHandler
+from modules.data_stream.universe_loader import load_symbol_universe
 from modules.trending_pool.trending_pool import TrendingPool
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ class DataOrchestrator:
     def __init__(
         self,
         api_key: str,
-        symbols: List[str],
+        symbols: Optional[List[str]] = None,
         use_mock_data: bool = False,
         batch_size: int = 10,
         batch_interval: float = 10.0,
@@ -49,7 +50,7 @@ class DataOrchestrator:
         
         Args:
             api_key: Finnhub API-nyckel
-            symbols: Lista över symboler att övervaka
+            symbols: Lista över symboler (om None, ladda från NASDAQ-100 universum)
             use_mock_data: Om True, använd mock data
             batch_size: Antal symboler per REST batch
             batch_interval: Sekunder mellan REST batcher
@@ -57,7 +58,23 @@ class DataOrchestrator:
             ws_rotation_interval: Sekunder mellan WS rotationer
         """
         self.api_key = api_key
-        self.symbols = symbols
+        
+        # Ladda symboler från universum om inte speciferat
+        if symbols is None:
+            try:
+                self.symbols = load_symbol_universe()
+                logger.info(f"Laddade {len(self.symbols)} symboler från NASDAQ-100 universum")
+            except Exception as e:
+                logger.error(f"Kunde inte ladda symboluniversum: {e}")
+                # Fallback till minimal lista
+                self.symbols = [
+                    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA',
+                    'BRK.B', 'UNH', 'JNJ'
+                ]
+                logger.warning(f"Använder fallback-lista med {len(self.symbols)} symboler")
+        else:
+            self.symbols = symbols
+        
         self.use_mock_data = use_mock_data
         
         # Initiera komponenter
