@@ -80,6 +80,11 @@ def create_sidebar():
                         html.Div("💼 PORTFOLIO & RISK", style={'color': '#9ca3af', 'fontSize': '12px', 'marginBottom': '10px', 'textTransform': 'uppercase'}),
                         
                         dbc.NavLink(
+                            [html.I(className="fas fa-chart-line me-2"), "Live Portfolio"],
+                            href="/live-portfolio",
+                            className="sidebar-nav-link"
+                        ),
+                        dbc.NavLink(
                             [html.I(className="fas fa-briefcase me-2"), "Multi Portfolio"],
                             href="/multi-portfolio",
                             className="sidebar-nav-link"
