@@ -4,6 +4,21 @@
 
 Obscuraflow använder nu en hybrid-strategi för att maximera datakvalitet och responsivitet inom begränsade API-gränser (Finnhub Free Tier: 60 calls/minut).
 
+## Installation
+
+### Beroenden
+
+Installera nödvändiga paket:
+
+```bash
+pip install -r requirements.txt
+```
+
+Viktiga beroenden för dataflödet:
+- `websockets>=12.0` - För WebSocket-anslutningar
+- `requests>=2.31.0` - För REST API-anrop
+- `asyncio` - För asynkron hantering (ingår i Python 3.7+)
+
 ## Arkitektur
 
 ### Komponenter
@@ -260,6 +275,17 @@ PYTHONPATH=. python3 -m pytest tests/test_orchestrator.py
 ```
 
 ## Troubleshooting
+
+### Problem: "No module named 'websockets'"
+
+**Lösning:**
+```bash
+# Installera websockets-modulen
+pip install websockets>=12.0
+
+# Eller installera alla beroenden
+pip install -r requirements.txt
+```
 
 ### Problem: Får fortfarande 429 errors
 
