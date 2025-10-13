@@ -548,9 +548,15 @@ def get_data_stream(use_mock: Optional[bool] = None, api_key: Optional[str] = No
     # Bestäm parametrar
     use_mock_data = use_mock if use_mock is not None else USE_MOCK_DATA
     api_key_to_use = api_key or FINNHUB_API_KEY
-    symbols_to_use = symbols or DEFAULT_SYMBOLS
+    # För live mode, låt orchestrator ladda symboler från universe file (NASDAQ-100)
+    # För mock mode, använd DEFAULT_SYMBOLS
+    if use_mock_data:
+        symbols_to_use = symbols or DEFAULT_SYMBOLS
+    else:
+        # Pass None to let DataOrchestrator load from universe file
+        symbols_to_use = symbols  # Will be None unless explicitly provided
     
-    logger.info(f"Skapar data stream: mock={use_mock_data}, symbols={len(symbols_to_use)}")
+    logger.info(f"Skapar data stream: mock={use_mock_data}, symbols={len(symbols_to_use) if symbols_to_use else 'auto-load'}")
     
     if use_mock_data:
         # Använd traditionell DataStream för mock data
@@ -563,7 +569,21 @@ def get_data_stream(use_mock: Optional[bool] = None, api_key: Optional[str] = No
         # Använd DataOrchestrator för live data med batching och WebSocket
         try:
             from modules.data_stream.orchestrator import DataOrchestrator
+            from modules.data_stream.orchestrator_manager import (
+                get_orchestrator_manager,
+                start_global_orchestrator
+            )
             
+            # Hämta global manager för att kolla om orchestrator redan körs
+            manager = get_orchestrator_manager()
+            status = manager.get_status()
+            
+            # Om orchestrator redan körs, returnera den befintliga
+            if status['running'] and manager.orchestrator:
+                logger.info("Återanvänder befintlig DataOrchestrator")
+                return manager.orchestrator
+            
+            # Skapa ny orchestrator
             orchestrator = DataOrchestrator(
                 api_key=api_key_to_use,
                 symbols=symbols_to_use,
@@ -574,10 +594,14 @@ def get_data_stream(use_mock: Optional[bool] = None, api_key: Optional[str] = No
                 ws_rotation_interval=12.0
             )
             
-            # Starta orchestrator i bakgrunden
-            # Notera: Detta kräver att anropande kod kör i async context
-            # För synkron användning, startar vi inte automatiskt
-            logger.info("DataOrchestrator skapad (använd async för att starta)")
+            # Starta orchestrator automatiskt i bakgrunden
+            logger.info("Startar DataOrchestrator automatiskt i bakgrunden...")
+            success = start_global_orchestrator(orchestrator)
+            
+            if success:
+                logger.info("DataOrchestrator startad framgångsrikt")
+            else:
+                logger.warning("DataOrchestrator skapades men kunde inte startas automatiskt")
             
             return orchestrator
             

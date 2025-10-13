@@ -15,11 +15,23 @@ from .data_stream import DataStream, get_data_stream
 from .rest_batcher import RestBatcher
 from .ws_handler import WebSocketHandler
 from .orchestrator import DataOrchestrator
+from .orchestrator_manager import (
+    OrchestratorManager,
+    get_orchestrator_manager,
+    start_global_orchestrator,
+    stop_global_orchestrator,
+    get_global_orchestrator_status
+)
 
 __all__ = [
     'DataStream',
     'get_data_stream',
     'RestBatcher',
     'WebSocketHandler',
-    'DataOrchestrator'
+    'DataOrchestrator',
+    'OrchestratorManager',
+    'get_orchestrator_manager',
+    'start_global_orchestrator',
+    'stop_global_orchestrator',
+    'get_global_orchestrator_status'
 ]

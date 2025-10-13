@@ -79,7 +79,27 @@ app.layout = dbc.Container(
 def update_data_source(value):
     """
     Uppdaterar data source store när toggle ändras.
+    Startar/stoppar orchestrator baserat på datakälla.
     """
+    import logging
+    from modules.data_stream.orchestrator_manager import (
+        stop_global_orchestrator,
+        get_global_orchestrator_status
+    )
+    
+    logger = logging.getLogger(__name__)
+    
+    # Om byter till mock, stoppa orchestrator om den körs
+    if value == 'mock':
+        status = get_global_orchestrator_status()
+        if status['running']:
+            logger.info("Byter till Mock Data - stoppar orchestrator")
+            stop_global_orchestrator()
+    else:
+        # Om byter till live, kommer orchestrator startas automatiskt
+        # av get_data_stream() när panelerna anropar den
+        logger.info("Byter till Live API - orchestrator kommer startas automatiskt")
+    
     return value
 
 # Callback för sidnavigering
