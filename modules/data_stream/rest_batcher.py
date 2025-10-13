@@ -172,8 +172,8 @@ class RestBatcher:
                     self.stats['failed_calls'] += 1
                 
                 # Liten paus mellan symboler för att sprida ut anropen
-                # 1 second per call to stay within 60 calls/minute limit
-                await asyncio.sleep(1.0)
+                # 1.05 seconds per call with small buffer to stay within 60 calls/minute limit
+                await asyncio.sleep(1.05)
             
             self.stats['last_batch_time'] = datetime.now()
             logger.info(f"Hämtade batch: {len(batch_data)}/{len(batch)} symboler lyckades")

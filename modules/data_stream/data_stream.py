@@ -548,9 +548,15 @@ def get_data_stream(use_mock: Optional[bool] = None, api_key: Optional[str] = No
     # Bestäm parametrar
     use_mock_data = use_mock if use_mock is not None else USE_MOCK_DATA
     api_key_to_use = api_key or FINNHUB_API_KEY
-    symbols_to_use = symbols or DEFAULT_SYMBOLS
+    # För live mode, låt orchestrator ladda symboler från universe file (NASDAQ-100)
+    # För mock mode, använd DEFAULT_SYMBOLS
+    if use_mock_data:
+        symbols_to_use = symbols or DEFAULT_SYMBOLS
+    else:
+        # Pass None to let DataOrchestrator load from universe file
+        symbols_to_use = symbols  # Will be None unless explicitly provided
     
-    logger.info(f"Skapar data stream: mock={use_mock_data}, symbols={len(symbols_to_use)}")
+    logger.info(f"Skapar data stream: mock={use_mock_data}, symbols={len(symbols_to_use) if symbols_to_use else 'auto-load'}")
     
     if use_mock_data:
         # Använd traditionell DataStream för mock data
