@@ -50,10 +50,16 @@ def test_data_flow_integration():
     # Update trending pool with market data
     for symbol in symbols:
         quote = market_data['quotes'].get(symbol, {})
+        # Validate volume and improve volatility calculation
+        raw_volume = quote.get('volume', 0)
+        normalized_volume = raw_volume / 1000000 if raw_volume > 0 else None
+        change_percent = quote.get('change_percent', 0)
+        # Use normalized change_percent as volatility, or None if not available
+        volatility = abs(change_percent) / 100 if change_percent != 0 else None
         trend_data = {
-            'volume': quote.get('volume', 0) / 1000000,  # Normalize volume
-            'momentum': quote.get('change_percent', 0),
-            'volatility': abs(quote.get('change_percent', 0)) / 2,
+            'volume': normalized_volume,  # Normalize volume, None if unavailable
+            'momentum': change_percent,
+            'volatility': volatility,
             'score': 0
         }
         trending_pool.update_symbol(symbol, trend_data)
