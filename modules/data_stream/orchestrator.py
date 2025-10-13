@@ -214,8 +214,8 @@ class DataOrchestrator:
             'total_symbols': total_symbols,
             'gainers': gainers,
             'losers': losers,
-            'neutral': total_symbols - gainers - losers,
-            'avg_change': round(avg_change, 2),
+            'unchanged': total_symbols - gainers - losers,
+            'avg_change_percent': round(avg_change, 2),
             'quotes': snapshots,
             'timestamp': datetime.now().isoformat()
         }
