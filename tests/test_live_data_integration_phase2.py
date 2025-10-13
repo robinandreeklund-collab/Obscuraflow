@@ -75,7 +75,7 @@ def test_data_flow_integration():
     from modules.decision_core import DecisionCore, AgentDecision, DecisionType
     from agents.agent_registry import AgentRegistry
     
-    decision_core = DecisionCore(generate_sample_decisions=False)
+    decision_core = DecisionCore(use_live_data=False)  # Don't auto-init live system in test
     registry = AgentRegistry()
     
     # Simulate agents making decisions based on live data
@@ -265,7 +265,7 @@ def test_module_stats():
             
             # Create instance
             if class_name == 'DecisionCore':
-                instance = cls(generate_sample_decisions=False)
+                instance = cls(use_live_data=False)
             else:
                 instance = cls()
             

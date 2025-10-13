@@ -25,121 +25,18 @@ class NarrativeEngine:
         narratives (Dict): Aktiva berättelser
     """
     
-    def __init__(self, generate_sample_events: bool = True):
+    def __init__(self):
         """
         Initierar NarrativeEngine.
-        
-        Args:
-            generate_sample_events: Om True, generera sample events för demonstration
         """
         self.events: List[Dict[str, Any]] = []
         self.narratives: Dict[str, List[str]] = {}
         self.causal_chains: List[List[str]] = []
         
-        if generate_sample_events:
-            self._generate_sample_events()
-        
         logger.info("NarrativeEngine initierad")
     
-    def _generate_sample_events(self) -> None:
-        """
-        Genererar sample events för demonstration av systemflöde.
-        """
-        import random
-        from datetime import timedelta
-        
-        # Symboler att använda i events
-        symbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA', 'META', 'AMD', 'AMZN']
-        
-        # Generera events från de senaste minuterna
-        base_time = datetime.now()
-        
-        # DataStream events
-        for i in range(3):
-            time_offset = timedelta(seconds=random.randint(10, 120))
-            symbol_count = random.randint(6, 12)
-            self.events.append({
-                'type': 'data_update',
-                'description': f"DataStream updated market data for {symbol_count} symbols. Trend analysis complete.",
-                'metadata': {'symbols': symbol_count},
-                'timestamp': (base_time - time_offset).isoformat(),
-                'icon': '🔄'
-            })
-        
-        # TrendingPool events
-        for i in range(2):
-            symbol = random.choice(symbols)
-            heat_score = round(random.uniform(7.0, 9.5), 1)
-            time_offset = timedelta(seconds=random.randint(15, 90))
-            self.events.append({
-                'type': 'trend_analysis',
-                'description': f"TrendingPool ranked {symbol} at #{i+1} with heat score {heat_score}. Volume spike detected.",
-                'metadata': {'symbol': symbol, 'score': heat_score},
-                'timestamp': (base_time - time_offset).isoformat(),
-                'icon': '📈'
-            })
-        
-        # Agent decision events
-        for i in range(4):
-            symbol = random.choice(symbols)
-            agent = random.choice(['MomentumAgent', 'ReversalAgent', 'BreakoutAgent', 'EchoAgent', 'FractalisAgent'])
-            signal = random.choice(['bullish', 'bearish', 'neutral'])
-            score = round(random.uniform(0.75, 0.95), 2)
-            time_offset = timedelta(seconds=random.randint(20, 100))
-            self.events.append({
-                'type': 'agent_signal',
-                'description': f"{agent} detected strong {signal} signal in {symbol}. Score: {score}.",
-                'metadata': {'agent': agent, 'symbol': symbol, 'signal': signal, 'score': score},
-                'timestamp': (base_time - time_offset).isoformat(),
-                'icon': '🤖'
-            })
-        
-        # DecisionCore consensus events
-        for i in range(2):
-            symbol = random.choice(symbols)
-            vote_count = random.randint(5, 8)
-            decision = random.choice(['BUY', 'SELL', 'HOLD'])
-            confidence = random.randint(75, 95)
-            time_offset = timedelta(seconds=random.randint(25, 85))
-            self.events.append({
-                'type': 'consensus',
-                'description': f"DecisionCore received {vote_count} agent votes for {symbol}. Consensus reached: {decision} with {confidence}% confidence.",
-                'metadata': {'symbol': symbol, 'votes': vote_count, 'decision': decision, 'confidence': confidence},
-                'timestamp': (base_time - time_offset).isoformat(),
-                'icon': '📊'
-            })
-        
-        # Fusion validation events
-        for i in range(2):
-            signal = random.choice(['BUY', 'SELL'])
-            timeframes = random.randint(2, 4)
-            convergence = round(random.uniform(0.80, 0.92), 2)
-            time_offset = timedelta(seconds=random.randint(30, 95))
-            self.events.append({
-                'type': 'signal_validation',
-                'description': f"Fusion module validated {signal} signal across {timeframes} timeframes. Convergence score: {convergence}.",
-                'metadata': {'signal': signal, 'timeframes': timeframes, 'convergence': convergence},
-                'timestamp': (base_time - time_offset).isoformat(),
-                'icon': '⚡'
-            })
-        
-        # Sizing events
-        symbol = random.choice(symbols)
-        shares = random.randint(100, 500)
-        amount = shares * random.randint(150, 500)
-        kelly = round(random.uniform(8.0, 15.0), 1)
-        time_offset = timedelta(seconds=random.randint(35, 80))
-        self.events.append({
-            'type': 'position_sizing',
-            'description': f"Sizing calculated position: {shares} shares {symbol} (${amount:,}). Kelly %: {kelly}%.",
-            'metadata': {'symbol': symbol, 'shares': shares, 'amount': amount, 'kelly': kelly},
-            'timestamp': (base_time - time_offset).isoformat(),
-            'icon': '💼'
-        })
-        
-        # Sortera events efter timestamp
-        self.events.sort(key=lambda x: x['timestamp'], reverse=True)
-        logger.info(f"Genererade {len(self.events)} sample events")
+    # REMOVED: Sample event generation is no longer used.
+    # All events must come from actual system activity.
     
     def add_event(self, event_type: str, description: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

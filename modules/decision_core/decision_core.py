@@ -82,7 +82,6 @@ class DecisionCore:
         self,
         min_confidence: float = 50.0,
         conflict_threshold: float = 0.5,
-        generate_sample_decisions: bool = False,
         use_live_data: bool = True
     ):
         """
@@ -91,7 +90,6 @@ class DecisionCore:
         Args:
             min_confidence: Minsta konfidensgrad (0-100)
             conflict_threshold: Andel motsatta beslut för konflikt (0-1)
-            generate_sample_decisions: Om True, generera sample beslut för demonstration
             use_live_data: Om True, använd live data från DataStream och agenter
         """
         self.min_confidence = min_confidence
@@ -113,47 +111,14 @@ class DecisionCore:
         # Initialize agents and data stream if using live data
         if use_live_data:
             self._initialize_live_system()
-        elif generate_sample_decisions:
-            self._generate_sample_decisions()
         
         logger.info(
             f"DecisionCore initialiserad (min_confidence={min_confidence}, "
             f"conflict_threshold={conflict_threshold}, use_live_data={use_live_data})"
         )
     
-    def _generate_sample_decisions(self) -> None:
-        """
-        Genererar sample beslut från olika agenter för demonstration.
-        """
-        import random
-        
-        agents = [
-            'MomentumAgent', 'ReversalAgent', 'BreakoutAgent', 'EchoAgent',
-            'FractalisAgent', 'VoxAgent', 'MycoAgent', 'ObscuraAgent'
-        ]
-        symbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA', 'META', 'AMD', 'AMZN']
-        
-        # Generate 10-20 sample decisions
-        num_decisions = random.randint(10, 20)
-        
-        for i in range(num_decisions):
-            agent = random.choice(agents)
-            symbol = random.choice(symbols)
-            decision_type = random.choice([DecisionType.BUY, DecisionType.SELL, DecisionType.HOLD])
-            confidence = random.uniform(60, 95)
-            
-            decision = AgentDecision(
-                agent_id=agent,
-                symbol=symbol,
-                decision=decision_type,
-                confidence=confidence,
-                reasoning=f"{agent} analysis for {symbol}"
-            )
-            
-            # Add decision (this will update stats)
-            self.add_decision(decision)
-        
-        logger.info(f"Genererade {num_decisions} sample beslut från {len(agents)} agenter")
+    # REMOVED: Sample decision generation is no longer used.
+    # All decisions must come from live agents analyzing real market data.
     
     def _initialize_live_system(self) -> None:
         """
@@ -203,8 +168,8 @@ class DecisionCore:
         except Exception as e:
             logger.error(f"Kunde inte initialisera live-system: {e}")
             self.use_live_data = False
-            # Fallback till sample decisions om live inte fungerar
-            self._generate_sample_decisions()
+            # No fallback to sample data - system must use live data or remain empty
+            logger.warning("DecisionCore will remain empty until live system is properly initialized")
     
     def _refresh_live_decisions(self) -> None:
         """

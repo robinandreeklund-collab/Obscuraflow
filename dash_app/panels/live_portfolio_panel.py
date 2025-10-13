@@ -43,7 +43,7 @@ def create_panel():
     portfolio_engine = PortfolioEngine(initial_capital=INITIAL_CAPITAL)
     
     # Initialize Decision Core to get agent decisions
-    decision_core = DecisionCore(min_confidence=50.0, generate_sample_decisions=True)
+    decision_core = DecisionCore(min_confidence=50.0, use_live_data=True)
     
     # Get portfolio stats
     try:
