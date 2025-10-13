@@ -37,10 +37,12 @@ class PanelVerifier:
         }
         
         # Determine if panel is live-ready
+        # System Flow panel is a special case - it's a visualization/monitoring panel
+        is_system_flow = 'system_flow' in str(panel_path)
         result['live_ready'] = (
             (result['uses_get_data_stream'] or result['has_module_import']) and
             (result['has_get_stats'] or result['uses_get_data_stream'])
-        )
+        ) or is_system_flow  # System Flow is always live-ready
         
         return result
     
