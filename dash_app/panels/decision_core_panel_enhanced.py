@@ -123,8 +123,8 @@ def create_panel():
                     symbol_decisions[symbol] = []
                 symbol_decisions[symbol].append(decision_dict)
     
-    # Analyze consensus for each symbol
-    for symbol, decisions in list(symbol_decisions.items())[:6]:  # Top 6 symbols
+    # Analyze consensus for each symbol - show all symbols with decisions
+    for symbol, decisions in symbol_decisions.items():  # All symbols, not just top 6
         quote = quotes.get(symbol, {})
         
         # Count votes
@@ -133,7 +133,7 @@ def create_panel():
         hold_votes = sum(1 for d in decisions if d.get('decision', '').lower() == 'hold')
         total_votes = len(decisions)
         
-        agents_voting = f"{total_votes}/6"  # Assuming 6 active agents
+        agents_voting = f"{total_votes}/{len(agent_activity)}"  # Show actual agent count
         
         # Determine consensus
         if buy_votes > sell_votes and buy_votes > hold_votes:
@@ -167,11 +167,11 @@ def create_panel():
     if not consensus_table_rows:
         consensus_table_rows = [['N/A', '$0.00', '0/6', 'HOLD', '0.0%', '⏳ Waiting for agents']]
     
-    # Build recent agent decisions table from actual decisions
+    # Build recent agent decisions table from actual decisions - show all active agents
     recent_decisions_rows = []
     
-    # Get recent decisions from each agent
-    for agent_id, activity in sorted(agent_activity.items(), key=lambda x: x[1]['decision_count'], reverse=True)[:6]:
+    # Get recent decisions from each agent (all agents, not just top 6)
+    for agent_id, activity in sorted(agent_activity.items(), key=lambda x: x[1]['decision_count'], reverse=True):
         decisions_list = activity.get('decisions', [])
         if decisions_list:
             # Get most recent decision

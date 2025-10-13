@@ -119,21 +119,27 @@ def create_panel():
     # Get agent weights from VoteEngine if available
     agent_weight_history = {}
     if hasattr(vote_engine, 'agent_weights') and vote_engine.agent_weights:
-        # Use current weights from VoteEngine
-        for agent_id, weight in list(vote_engine.agent_weights.items())[:6]:
+        # Use current weights from VoteEngine - show all agents
+        for agent_id, weight in vote_engine.agent_weights.items():
             # Create a simple trend line (in production, would track history)
             agent_weight_history[agent_id] = [weight] * 24
     else:
-        # Use agent activity data
-        for agent_id, activity in list(agent_activity.items())[:6]:
+        # Use agent activity data - show all agents
+        for agent_id, activity in agent_activity.items():
             # Use average confidence as a proxy for weight evolution
             avg_conf = activity.get('avg_confidence', 50) / 100.0
             agent_weight_history[agent_id] = [avg_conf] * 24
     
     # Create weight evolution lines for active agents
     weight_evolution = go.Figure()
-    colors = {'momentum_agent': '#00d9ff', 'reversal_agent': '#7c3aed', 'breakout_agent': '#10b981',
-              'echo_agent': '#f59e0b', 'vox_agent': '#ef4444', 'fractalis_agent': '#8b5cf6'}
+    colors = {
+        'momentum_agent': '#00d9ff', 'reversal_agent': '#7c3aed', 'breakout_agent': '#10b981',
+        'echo_agent': '#f59e0b', 'vox_agent': '#ef4444', 'fractalis_agent': '#8b5cf6',
+        'hybrid_agent': '#3b82f6', 'myco_agent': '#14b8a6', 'obscura_agent': '#6366f1',
+        'mirage_agent': '#ec4899', 'sentio_agent': '#f97316', 'reflexion_agent': '#a855f7',
+        'dimensio_agent': '#06b6d4', 'symbio_agent': '#84cc16', 'genesis_agent': '#eab308',
+        'architectum_agent': '#f43f5e'
+    }
     
     for agent_id, weights in agent_weight_history.items():
         agent_name = agent_id.replace('_agent', '').replace('_', ' ').title()
