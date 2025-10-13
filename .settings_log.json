@@ -1,0 +1,3 @@
+{"timestamp": "2025-10-13T11:58:26.830661", "type": "Module Toggle", "component": "DataStream", "old_value": "False", "new_value": "True"}
+{"timestamp": "2025-10-13T11:58:26.848222", "type": "Agent Toggle", "component": "momentum_agent", "old_value": "False", "new_value": "True"}
+{"timestamp": "2025-10-13T11:58:26.848844", "type": "Parameter Change", "component": "FUSION_THRESHOLD", "old_value": "None", "new_value": "0.75"}

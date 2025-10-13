@@ -20,80 +20,35 @@ PANEL_METADATA = {
 def create_module_control_section():
     """Creates the module control section with toggles for all modules"""
     
+    from dash_app.utils.settings_manager import get_settings_manager
+    manager = get_settings_manager()
+    
     # Get live module status from actual modules
     modules = []
     
-    try:
-        # DataStream
-        from modules.data_stream.data_stream import get_data_stream
-        from dash_app.config import USE_MOCK_DATA
-        data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
-        modules.append({"name": "DataStream", "status": "active", "icon": "fas fa-stream"})
-    except:
-        modules.append({"name": "DataStream", "status": "inactive", "icon": "fas fa-stream"})
+    module_list = [
+        ("DataStream", "fas fa-stream"),
+        ("TrendingPool", "fas fa-fire"),
+        ("Fusion", "fas fa-code-branch"),
+        ("VoteEngine", "fas fa-vote-yea"),
+        ("Sizing", "fas fa-chart-line"),
+        ("PortfolioEngine", "fas fa-briefcase"),
+        ("SelfCritique", "fas fa-search"),
+        ("MutationTracker", "fas fa-dna"),
+        ("DecisionCore", "fas fa-brain"),
+        ("TimespanEngine", "fas fa-clock")
+    ]
     
-    try:
-        # TrendingPool
-        from modules.trending_pool import TrendingPool
-        modules.append({"name": "TrendingPool", "status": "active", "icon": "fas fa-fire"})
-    except:
-        modules.append({"name": "TrendingPool", "status": "inactive", "icon": "fas fa-fire"})
-    
-    try:
-        # Fusion
-        from modules.fusion import Fusion
-        modules.append({"name": "Fusion", "status": "active", "icon": "fas fa-code-branch"})
-    except:
-        modules.append({"name": "Fusion", "status": "inactive", "icon": "fas fa-code-branch"})
-    
-    try:
-        # VoteEngine
-        from modules.vote_engine import VoteEngine
-        modules.append({"name": "VoteEngine", "status": "active", "icon": "fas fa-vote-yea"})
-    except:
-        modules.append({"name": "VoteEngine", "status": "inactive", "icon": "fas fa-vote-yea"})
-    
-    try:
-        # Sizing
-        from modules.sizing import Sizing
-        modules.append({"name": "Sizing", "status": "active", "icon": "fas fa-chart-line"})
-    except:
-        modules.append({"name": "Sizing", "status": "inactive", "icon": "fas fa-chart-line"})
-    
-    try:
-        # PortfolioEngine
-        from modules.portfolio_engine import PortfolioEngine
-        modules.append({"name": "PortfolioEngine", "status": "active", "icon": "fas fa-briefcase"})
-    except:
-        modules.append({"name": "PortfolioEngine", "status": "inactive", "icon": "fas fa-briefcase"})
-    
-    try:
-        # SelfCritique
-        from modules.self_critique import SelfCritique
-        modules.append({"name": "SelfCritique", "status": "active", "icon": "fas fa-search"})
-    except:
-        modules.append({"name": "SelfCritique", "status": "inactive", "icon": "fas fa-search"})
-    
-    try:
-        # MutationTracker
-        from modules.mutation_tracker import MutationTracker
-        modules.append({"name": "MutationTracker", "status": "active", "icon": "fas fa-dna"})
-    except:
-        modules.append({"name": "MutationTracker", "status": "inactive", "icon": "fas fa-dna"})
-    
-    try:
-        # DecisionCore
-        from modules.decision_core import DecisionCore
-        modules.append({"name": "DecisionCore", "status": "active", "icon": "fas fa-brain"})
-    except:
-        modules.append({"name": "DecisionCore", "status": "inactive", "icon": "fas fa-brain"})
-    
-    try:
-        # TimespanEngine
-        from modules.timespan_engine import TimespanEngine
-        modules.append({"name": "TimespanEngine", "status": "active", "icon": "fas fa-clock"})
-    except:
-        modules.append({"name": "TimespanEngine", "status": "inactive", "icon": "fas fa-clock"})
+    for module_name, icon in module_list:
+        # Check if module is available and get status from manager
+        status = "inactive"
+        try:
+            __import__(f'modules.{module_name.lower().replace("engine", "_engine")}')
+            status = "active" if manager.get_module_status(module_name) else "inactive"
+        except:
+            status = "inactive"
+        
+        modules.append({"name": module_name, "status": status, "icon": icon})
     
     module_cards = []
     for module in modules:
@@ -110,7 +65,7 @@ def create_module_control_section():
                             html.Span(module['status'].title(), style={'fontSize': '12px'})
                         ]),
                         dbc.Switch(
-                            id=f"module-switch-{module['name'].lower()}",
+                            id={'type': 'module-switch', 'module': module['name']},
                             value=True if module['status'] == 'active' else False,
                             className="mt-2"
                         )
@@ -129,6 +84,9 @@ def create_module_control_section():
 
 def create_agent_control_section():
     """Creates the agent control section with live data from agent registry"""
+    
+    from dash_app.utils.settings_manager import get_settings_manager
+    manager = get_settings_manager()
     
     # Get live agent data from agent registry
     try:
@@ -163,10 +121,9 @@ def create_agent_control_section():
                 f"{confidence:.2f}" if confidence > 0 else "N/A",
                 html.Div([
                     dbc.Switch(
-                        id=f"agent-switch-{agent_id}",
+                        id={'type': 'agent-switch', 'agent': agent_id},
                         value=is_active,
-                        label="",
-                        disabled=True  # Disabled for now - would need callback implementation
+                        label=""
                     )
                 ])
             ])
@@ -561,6 +518,9 @@ def create_panel():
                 ], color="info", className="mb-0")
             ])
         ]),
+        
+        # Hidden status div for parameter updates
+        html.Div(id='param-update-status', style={'display': 'none'}),
         
         # Auto-refresh interval
         dcc.Interval(

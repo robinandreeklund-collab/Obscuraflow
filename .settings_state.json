@@ -1,0 +1,12 @@
+{
+  "modules": {
+    "DataStream": true
+  },
+  "agents": {
+    "momentum_agent": true
+  },
+  "parameters": {
+    "FUSION_THRESHOLD": 0.75
+  },
+  "last_updated": "2025-10-13T11:58:26.848298"
+}
