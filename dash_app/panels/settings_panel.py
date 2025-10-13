@@ -20,18 +20,80 @@ PANEL_METADATA = {
 def create_module_control_section():
     """Creates the module control section with toggles for all modules"""
     
-    modules = [
-        {"name": "DataStream", "status": "active", "icon": "fas fa-stream"},
-        {"name": "TrendingPool", "status": "active", "icon": "fas fa-fire"},
-        {"name": "AgentLayer", "status": "active", "icon": "fas fa-users"},
-        {"name": "Fusion", "status": "active", "icon": "fas fa-code-branch"},
-        {"name": "VoteEngine", "status": "active", "icon": "fas fa-vote-yea"},
-        {"name": "Sizing", "status": "active", "icon": "fas fa-chart-line"},
-        {"name": "ExecutionMonitor", "status": "active", "icon": "fas fa-eye"},
-        {"name": "PortfolioEngine", "status": "active", "icon": "fas fa-briefcase"},
-        {"name": "SelfCritique", "status": "active", "icon": "fas fa-search"},
-        {"name": "MutationTracker", "status": "active", "icon": "fas fa-dna"},
-    ]
+    # Get live module status from actual modules
+    modules = []
+    
+    try:
+        # DataStream
+        from modules.data_stream.data_stream import get_data_stream
+        from dash_app.config import USE_MOCK_DATA
+        data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+        modules.append({"name": "DataStream", "status": "active", "icon": "fas fa-stream"})
+    except:
+        modules.append({"name": "DataStream", "status": "inactive", "icon": "fas fa-stream"})
+    
+    try:
+        # TrendingPool
+        from modules.trending_pool import TrendingPool
+        modules.append({"name": "TrendingPool", "status": "active", "icon": "fas fa-fire"})
+    except:
+        modules.append({"name": "TrendingPool", "status": "inactive", "icon": "fas fa-fire"})
+    
+    try:
+        # Fusion
+        from modules.fusion import Fusion
+        modules.append({"name": "Fusion", "status": "active", "icon": "fas fa-code-branch"})
+    except:
+        modules.append({"name": "Fusion", "status": "inactive", "icon": "fas fa-code-branch"})
+    
+    try:
+        # VoteEngine
+        from modules.vote_engine import VoteEngine
+        modules.append({"name": "VoteEngine", "status": "active", "icon": "fas fa-vote-yea"})
+    except:
+        modules.append({"name": "VoteEngine", "status": "inactive", "icon": "fas fa-vote-yea"})
+    
+    try:
+        # Sizing
+        from modules.sizing import Sizing
+        modules.append({"name": "Sizing", "status": "active", "icon": "fas fa-chart-line"})
+    except:
+        modules.append({"name": "Sizing", "status": "inactive", "icon": "fas fa-chart-line"})
+    
+    try:
+        # PortfolioEngine
+        from modules.portfolio_engine import PortfolioEngine
+        modules.append({"name": "PortfolioEngine", "status": "active", "icon": "fas fa-briefcase"})
+    except:
+        modules.append({"name": "PortfolioEngine", "status": "inactive", "icon": "fas fa-briefcase"})
+    
+    try:
+        # SelfCritique
+        from modules.self_critique import SelfCritique
+        modules.append({"name": "SelfCritique", "status": "active", "icon": "fas fa-search"})
+    except:
+        modules.append({"name": "SelfCritique", "status": "inactive", "icon": "fas fa-search"})
+    
+    try:
+        # MutationTracker
+        from modules.mutation_tracker import MutationTracker
+        modules.append({"name": "MutationTracker", "status": "active", "icon": "fas fa-dna"})
+    except:
+        modules.append({"name": "MutationTracker", "status": "inactive", "icon": "fas fa-dna"})
+    
+    try:
+        # DecisionCore
+        from modules.decision_core import DecisionCore
+        modules.append({"name": "DecisionCore", "status": "active", "icon": "fas fa-brain"})
+    except:
+        modules.append({"name": "DecisionCore", "status": "inactive", "icon": "fas fa-brain"})
+    
+    try:
+        # TimespanEngine
+        from modules.timespan_engine import TimespanEngine
+        modules.append({"name": "TimespanEngine", "status": "active", "icon": "fas fa-clock"})
+    except:
+        modules.append({"name": "TimespanEngine", "status": "inactive", "icon": "fas fa-clock"})
     
     module_cards = []
     for module in modules:
@@ -66,35 +128,56 @@ def create_module_control_section():
 
 
 def create_agent_control_section():
-    """Creates the agent control section"""
+    """Creates the agent control section with live data from agent registry"""
     
-    agents = [
-        {"name": "MomentumAgent", "active": True, "accuracy": 76.3, "confidence": 0.85},
-        {"name": "ReversalAgent", "active": True, "accuracy": 78.5, "confidence": 0.82},
-        {"name": "BreakoutAgent", "active": True, "accuracy": 82.1, "confidence": 0.88},
-        {"name": "EchoAgent", "active": True, "accuracy": 79.8, "confidence": 0.86},
-        {"name": "VoxAgent", "active": True, "accuracy": 81.2, "confidence": 0.87},
-        {"name": "FractalisAgent", "active": True, "accuracy": 74.5, "confidence": 0.79},
-        {"name": "GenesisAgent", "active": True, "accuracy": 77.3, "confidence": 0.83},
-        {"name": "ObscuraAgent", "active": False, "accuracy": 71.0, "confidence": 0.75},
-    ]
-    
-    agent_rows = []
-    for agent in agents:
-        status_icon = "🟢" if agent['active'] else "🔴"
-        agent_rows.append([
-            agent['name'],
-            f"{status_icon} {'Active' if agent['active'] else 'Inactive'}",
-            f"{agent['accuracy']:.1f}%",
-            f"{agent['confidence']:.2f}",
-            html.Div([
-                dbc.Switch(
-                    id=f"agent-switch-{agent['name'].lower()}",
-                    value=agent['active'],
-                    label=""
-                )
+    # Get live agent data from agent registry
+    try:
+        from agents.agent_registry import get_registry
+        registry = get_registry()
+        agent_list = registry.list_agents()
+        
+        agent_rows = []
+        for agent_info in agent_list:
+            agent_name = agent_info.get('name', 'Unknown')
+            agent_id = agent_info.get('id', '')
+            
+            # Check if agent has an active instance
+            instance = registry.get_instance(agent_id)
+            is_active = instance is not None
+            
+            # Get stats if instance exists, otherwise use defaults
+            if instance and hasattr(instance, 'get_stats'):
+                stats = instance.get_stats()
+                accuracy = stats.get('accuracy', 0.0)
+                confidence = stats.get('avg_confidence', 0.75)
+            else:
+                # Default values for agents without instances
+                accuracy = 0.0
+                confidence = 0.0
+            
+            status_icon = "🟢" if is_active else "🔴"
+            agent_rows.append([
+                agent_name,
+                f"{status_icon} {'Active' if is_active else 'Inactive'}",
+                f"{accuracy:.1f}%" if accuracy > 0 else "N/A",
+                f"{confidence:.2f}" if confidence > 0 else "N/A",
+                html.Div([
+                    dbc.Switch(
+                        id=f"agent-switch-{agent_id}",
+                        value=is_active,
+                        label="",
+                        disabled=True  # Disabled for now - would need callback implementation
+                    )
+                ])
             ])
-        ])
+        
+        # If no agents found, show message
+        if not agent_rows:
+            agent_rows = [['No agents found', 'N/A', 'N/A', 'N/A', 'N/A']]
+            
+    except Exception as e:
+        # Fallback if agent registry fails
+        agent_rows = [[f'Error loading agents: {str(e)}', 'N/A', 'N/A', 'N/A', 'N/A']]
     
     return dbc.Card([
         dbc.CardHeader("🧠 Agent Control", style={'backgroundColor': '#151932', 'color': '#00d9ff', 'fontWeight': 'bold'}),
@@ -246,44 +329,95 @@ def create_panel_control_section():
 
 
 def create_system_status_section():
-    """Creates the system status and log section"""
+    """Creates the system status and log section with live data"""
     
     from datetime import datetime, timedelta
     now = datetime.now()
     
-    status_data = {
-        'active_modules': 10,
-        'active_agents': 7,
-        'api_status': 'Connected',
-        'ws_status': 'Active',
-        'portfolio_value': '$125,430'
-    }
+    # Get live system status
+    try:
+        from agents.agent_registry import get_registry
+        from dash_app.config import USE_MOCK_DATA
+        
+        registry = get_registry()
+        stats = registry.get_stats()
+        
+        # Count active modules by attempting imports
+        active_modules = 0
+        total_modules = 10
+        
+        module_list = [
+            'data_stream', 'trending_pool', 'fusion', 'vote_engine', 
+            'sizing', 'portfolio_engine', 'self_critique', 'mutation_tracker',
+            'decision_core', 'timespan_engine'
+        ]
+        
+        for mod in module_list:
+            try:
+                __import__(f'modules.{mod}')
+                active_modules += 1
+            except:
+                pass
+        
+        # Get agent counts from registry
+        total_agents = stats.get('total_agent_types', 0)
+        active_agents = stats.get('active_instances', 0)
+        
+        # Get API status from data_stream if available
+        api_status = 'Unknown'
+        ws_status = 'Unknown'
+        try:
+            from modules.data_stream.data_stream import get_data_stream
+            data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+            if data_stream:
+                api_status = 'Mock Data' if USE_MOCK_DATA else 'Connected'
+                ws_status = 'Mock' if USE_MOCK_DATA else 'Active'
+        except:
+            api_status = 'Error'
+            ws_status = 'Error'
+        
+        # Get portfolio value if available
+        portfolio_value = 'N/A'
+        try:
+            from modules.portfolio_engine import PortfolioEngine
+            portfolio = PortfolioEngine()
+            p_stats = portfolio.get_stats()
+            total_value = p_stats.get('total_value', 0)
+            if total_value > 0:
+                portfolio_value = f"${total_value:,.0f}"
+        except:
+            portfolio_value = 'N/A'
+        
+        status_data = {
+            'active_modules': active_modules,
+            'total_modules': total_modules,
+            'active_agents': active_agents,
+            'total_agents': total_agents,
+            'api_status': api_status,
+            'ws_status': ws_status,
+            'portfolio_value': portfolio_value
+        }
+        
+    except Exception as e:
+        # Fallback if status retrieval fails
+        status_data = {
+            'active_modules': 0,
+            'total_modules': 10,
+            'active_agents': 0,
+            'total_agents': 16,
+            'api_status': f'Error: {str(e)[:30]}',
+            'ws_status': 'Error',
+            'portfolio_value': 'N/A'
+        }
     
+    # Activity log - would need to be stored in a file or database in real implementation
     recent_changes = [
         [
-            (now - timedelta(minutes=5)).strftime('%H:%M:%S'),
-            'Parameter Change',
-            'Fusion Threshold',
-            '0.6 → 0.7'
-        ],
-        [
-            (now - timedelta(minutes=12)).strftime('%H:%M:%S'),
-            'Module Toggle',
-            'SelfCritique',
-            'Activated'
-        ],
-        [
-            (now - timedelta(minutes=25)).strftime('%H:%M:%S'),
-            'Agent Toggle',
-            'ObscuraAgent',
-            'Deactivated'
-        ],
-        [
-            (now - timedelta(hours=1)).strftime('%H:%M:%S'),
-            'Parameter Change',
-            'Max Position Size',
-            '0.15 → 0.20'
-        ],
+            now.strftime('%H:%M:%S'),
+            'System Info',
+            'Live Status',
+            'Updated'
+        ]
     ]
     
     return dbc.Card([
@@ -293,8 +427,8 @@ def create_system_status_section():
                 dbc.Col([
                     html.H6("Current Status", style={'color': '#00d9ff', 'marginBottom': '15px'}),
                     html.Div([
-                        html.P(f"Active Modules: {status_data['active_modules']}/10", className="mb-2"),
-                        html.P(f"Active Agents: {status_data['active_agents']}/8", className="mb-2"),
+                        html.P(f"Active Modules: {status_data['active_modules']}/{status_data['total_modules']}", className="mb-2"),
+                        html.P(f"Active Agents: {status_data['active_agents']}/{status_data['total_agents']}", className="mb-2"),
                         html.P([
                             html.Span("API Status: ", style={'color': '#9ca3af'}),
                             html.Span(f"● {status_data['api_status']}", style={'color': '#10b981'})
@@ -328,34 +462,76 @@ def create_panel():
         "fas fa-cog"
     )
     
+    # Get live metrics for top cards
+    try:
+        from agents.agent_registry import get_registry
+        registry = get_registry()
+        stats = registry.get_stats()
+        
+        # Count active modules
+        active_modules = 0
+        total_modules = 10
+        module_list = [
+            'data_stream', 'trending_pool', 'fusion', 'vote_engine', 
+            'sizing', 'portfolio_engine', 'self_critique', 'mutation_tracker',
+            'decision_core', 'timespan_engine'
+        ]
+        for mod in module_list:
+            try:
+                __import__(f'modules.{mod}')
+                active_modules += 1
+            except:
+                pass
+        
+        active_agents = stats.get('active_instances', 0)
+        total_agents = stats.get('total_agent_types', 0)
+        
+        # Count active panels (16 total now including settings)
+        active_panels = 16
+        total_panels = 16
+        
+        # Calculate system health
+        if active_modules == total_modules and active_agents > 0:
+            system_health = "Excellent"
+        elif active_modules >= total_modules * 0.7:
+            system_health = "Good"
+        else:
+            system_health = "Limited"
+            
+    except Exception as e:
+        active_modules, total_modules = 0, 10
+        active_agents, total_agents = 0, 16
+        active_panels, total_panels = 16, 16
+        system_health = "Unknown"
+    
     content = dbc.Container([
         # Top Metrics Row
         dbc.Row([
             dbc.Col([
                 create_metric_card(
                     "Active Modules",
-                    "10/10",
+                    f"{active_modules}/{total_modules}",
                     icon="fas fa-puzzle-piece"
                 )
             ], width=12, lg=3, md=6),
             dbc.Col([
                 create_metric_card(
                     "Active Agents",
-                    "7/8",
+                    f"{active_agents}/{total_agents}",
                     icon="fas fa-users"
                 )
             ], width=12, lg=3, md=6),
             dbc.Col([
                 create_metric_card(
                     "Active Panels",
-                    "15/15",
+                    f"{active_panels}/{total_panels}",
                     icon="fas fa-th-large"
                 )
             ], width=12, lg=3, md=6),
             dbc.Col([
                 create_metric_card(
                     "System Health",
-                    "Excellent",
+                    system_health,
                     icon="fas fa-heart"
                 )
             ], width=12, lg=3, md=6)
