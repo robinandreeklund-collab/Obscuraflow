@@ -63,13 +63,24 @@ def create_panel():
         
         # Use Sizing module to calculate position
         win_rate = confidence / 100.0
-        avg_win = 0.05  # 5% average win assumption
-        avg_loss = 0.02  # 2% average loss assumption
+        avg_win_loss_ratio = 2.5  # Assume 2.5:1 reward/risk ratio
         volatility = abs(quote.get('dp', 0)) / 100.0  # Use daily percent change as volatility proxy
         
-        # Calculate Kelly percentage
-        kelly_fraction = sizing.calculate_kelly(win_rate, avg_win, avg_loss) if win_rate > 0 else 0.0
-        kelly_pct = f"{kelly_fraction * 100:.1f}%"
+        # Calculate position size using Sizing module
+        capital = 100000  # Starting capital
+        sizing_result = sizing.calculate_position_size(
+            symbol=symbol,
+            portfolio_value=capital,
+            confidence=confidence,
+            volatility=volatility,
+            win_rate=win_rate,
+            avg_win_loss_ratio=avg_win_loss_ratio
+        )
+        
+        # Extract kelly fraction and position size from result
+        kelly_fraction = sizing_result.get('kelly_fraction', 0.0) or 0.0
+        position_value = sizing_result.get('position_size', 0.0)
+        kelly_pct = f"{kelly_fraction * 100:.1f}%" if kelly_fraction else "0.0%"
         
         # Determine volatility classification
         if volatility < 0.02:
@@ -79,9 +90,7 @@ def create_panel():
         else:
             vol_class = 'High'
         
-        # Calculate shares based on Kelly and price
-        capital = 100000  # Starting capital
-        position_value = capital * kelly_fraction
+        # Calculate shares based on position value and price
         shares = int(position_value / price) if price > 0 else 0
         
         allocation = f"${int(price * shares):,}"
