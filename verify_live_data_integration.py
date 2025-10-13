@@ -152,7 +152,10 @@ class LiveDataVerifier:
         result = portfolio_engine.optimize_portfolio('test_portfolio')
         
         # Check for any hardcoded data in optimization
-        has_simulation = 'current_price = pos' in str(result)
+        has_simulation = False
+        if isinstance(result, dict):
+            # Check for a standardized flag indicating simulation/hardcoded data
+            has_simulation = result.get('used_simulation', False) or result.get('used_hardcoded_data', False)
         
         return {
             'uses_data_stream': False,
