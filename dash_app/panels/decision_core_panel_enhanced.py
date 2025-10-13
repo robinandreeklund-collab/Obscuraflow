@@ -11,6 +11,14 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
+# Panel Metadata
+PANEL_METADATA = {
+    "data_source": "live",
+    "live_ready": True,
+    "verified": True,
+    "phase": "Phase 3 - Live Data Integration Complete"
+}
+
 def create_panel():
     """
     Skapar Enhanced Decision Core panelen med detaljerad live data.

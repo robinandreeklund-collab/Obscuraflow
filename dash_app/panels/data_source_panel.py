@@ -16,6 +16,14 @@ sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
 logger = logging.getLogger(__name__)
 
 
+# Panel Metadata
+PANEL_METADATA = {
+    "data_source": "live",
+    "live_ready": True,
+    "verified": True,
+    "phase": "Phase 3 - Live Data Integration Complete"
+}
+
 def create_panel():
     """
     Skapar Data Source panelen med WebSocket och API monitoring.
