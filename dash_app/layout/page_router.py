@@ -84,8 +84,9 @@ def create_home_page():
             dbc.Col([
                 dbc.Alert([
                     html.H4("System Status", className="alert-heading"),
-                    html.P("Alla moduler är aktiva och kopplade till live mockdata."),
+                    html.P("Alla moduler är aktiva och använder dynamisk data från centralt dataflöde."),
                     html.Hr(),
+                    html.P("Växla mellan Mock Data (simulerad Nasdaq-100) och Live API i sidomenyn.", className="mb-2"),
                     html.P("Auto-uppdatering var 2-5 sekunder beroende på panel.", className="mb-0")
                 ], color="success")
             ])

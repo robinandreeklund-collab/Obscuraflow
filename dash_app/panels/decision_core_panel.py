@@ -20,6 +20,31 @@ def create_panel():
     decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4)
     stats = decision_core.get_stats()
     
+    # Get agent activity - dynamically generated from decision core
+    agent_activity = decision_core.get_agent_activity()
+    agent_activity_items = []
+    
+    # Map agents to icons
+    agent_icons = {
+        'MomentumAgent': '🤖',
+        'ReversalAgent': '🔄',
+        'BreakoutAgent': '⚡',
+        'EchoAgent': '🌊',
+        'FractalisAgent': '📊',
+        'VoxAgent': '🗣️',
+        'MycoAgent': '🍄',
+        'ObscuraAgent': '🌑'
+    }
+    
+    for agent_id, activity in sorted(agent_activity.items(), key=lambda x: x[1]['decision_count'], reverse=True):
+        icon = agent_icons.get(agent_id, '🔮')
+        count = activity['decision_count']
+        status = activity['status']
+        avg_conf = activity['avg_confidence']
+        agent_activity_items.append(
+            html.P(f"{icon} {agent_id} - {count} decisions (Avg conf: {avg_conf:.1f}%, {status})", className="mb-2")
+        )
+    
     header = create_header(
         "Decision Core",
         "Agentbeslut, konsensusanalys och beslutsrouting",
@@ -98,19 +123,13 @@ def create_panel():
             ], width=6)
         ]),
         
-        # Agent activity
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader("Agent Activity", style={'backgroundColor': '#151932', 'color': '#00d9ff'}),
                     dbc.CardBody([
-                        html.Div([
-                            html.P("🤖 MomentumAgent - 15 decisions (Active)", className="mb-2"),
-                            html.P("🔄 ReversalAgent - 12 decisions (Active)", className="mb-2"),
-                            html.P("⚡ BreakoutAgent - 18 decisions (Active)", className="mb-2"),
-                            html.P("🌊 EchoAgent - 14 decisions (Active)", className="mb-2"),
-                            html.P("📊 FractalisAgent - 11 decisions (Active)", className="mb-2"),
-                            html.P("🗣️ VoxAgent - 16 decisions (Active)", className="mb-2")
+                        html.Div(agent_activity_items if agent_activity_items else [
+                            html.P("No agent activity yet.", style={'color': '#9ca3af'})
                         ])
                     ])
                 ], className="mb-3")

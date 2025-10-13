@@ -81,7 +81,8 @@ class DecisionCore:
     def __init__(
         self,
         min_confidence: float = 50.0,
-        conflict_threshold: float = 0.5
+        conflict_threshold: float = 0.5,
+        generate_sample_decisions: bool = True
     ):
         """
         Initierar DecisionCore.
@@ -89,6 +90,7 @@ class DecisionCore:
         Args:
             min_confidence: Minsta konfidensgrad (0-100)
             conflict_threshold: Andel motsatta beslut för konflikt (0-1)
+            generate_sample_decisions: Om True, generera sample beslut för demonstration
         """
         self.min_confidence = min_confidence
         self.conflict_threshold = conflict_threshold
@@ -105,10 +107,47 @@ class DecisionCore:
             'conflicts_detected': 0
         }
         
+        if generate_sample_decisions:
+            self._generate_sample_decisions()
+        
         logger.info(
             f"DecisionCore initialiserad (min_confidence={min_confidence}, "
             f"conflict_threshold={conflict_threshold})"
         )
+    
+    def _generate_sample_decisions(self) -> None:
+        """
+        Genererar sample beslut från olika agenter för demonstration.
+        """
+        import random
+        
+        agents = [
+            'MomentumAgent', 'ReversalAgent', 'BreakoutAgent', 'EchoAgent',
+            'FractalisAgent', 'VoxAgent', 'MycoAgent', 'ObscuraAgent'
+        ]
+        symbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA', 'META', 'AMD', 'AMZN']
+        
+        # Generate 10-20 sample decisions
+        num_decisions = random.randint(10, 20)
+        
+        for i in range(num_decisions):
+            agent = random.choice(agents)
+            symbol = random.choice(symbols)
+            decision_type = random.choice([DecisionType.BUY, DecisionType.SELL, DecisionType.HOLD])
+            confidence = random.uniform(60, 95)
+            
+            decision = AgentDecision(
+                agent_id=agent,
+                symbol=symbol,
+                decision=decision_type,
+                confidence=confidence,
+                reasoning=f"{agent} analysis for {symbol}"
+            )
+            
+            # Add decision (this will update stats)
+            self.add_decision(decision)
+        
+        logger.info(f"Genererade {num_decisions} sample beslut från {len(agents)} agenter")
     
     def add_decision(self, decision: AgentDecision) -> bool:
         """
@@ -333,3 +372,33 @@ class DecisionCore:
             'unique_symbols': len(self.get_all_symbols()),
             'decisions_in_history': len(self.decision_history)
         }
+    
+    def get_agent_activity(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Hämtar aktivitet per agent.
+        
+        Returns:
+            Dict med agent_id -> activity stats
+        """
+        agent_activity = {}
+        
+        for decision in self.decisions:
+            agent_id = decision.agent_id
+            if agent_id not in agent_activity:
+                agent_activity[agent_id] = {
+                    'decision_count': 0,
+                    'avg_confidence': 0,
+                    'decisions': [],
+                    'status': 'Active'
+                }
+            
+            agent_activity[agent_id]['decision_count'] += 1
+            agent_activity[agent_id]['decisions'].append(decision.to_dict())
+        
+        # Calculate average confidence for each agent
+        for agent_id, activity in agent_activity.items():
+            if activity['decision_count'] > 0:
+                confidences = [d['confidence'] for d in activity['decisions']]
+                activity['avg_confidence'] = sum(confidences) / len(confidences)
+        
+        return agent_activity

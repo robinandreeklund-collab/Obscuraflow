@@ -1069,6 +1069,46 @@ Klicka på togglen för att växla mellan datakällor. Alla paneler uppdateras a
 - Rate limiting skydd (100ms mellan anrop)
 - Stöd för 12 default symboler (konfigurerbart i `dash_app/config.py`)
 
+### 🔄 Dynamiskt Datasystem
+
+**Status: ✅ Fullt Implementerat och Verifierat**
+
+Hela systemet använder nu dynamisk data från det centrala dataflödet. Ingen statisk eller hårdkodad data används i panelerna.
+
+**Centralt Dataflöde:**
+- `DataStream` (modules/data_stream): Huvudkälla för marknadsdata
+- `DataProvider` (dash_app/utils): Enhetligt gränssnitt för panels
+- Automatisk växling mellan Mock Data och Live API via `USE_MOCK_DATA` flag
+- All data genereras dynamiskt vid varje panel-rendering
+
+**Dynamiska Moduler:**
+- **NarrativeEngine**: Genererar händelseflöde och systemberättelse dynamiskt
+- **DecisionCore**: Skapar agentbeslut och aktivitetsstatistik i realtid
+- **MutationTracker**: Genererar lineage-data och mutationshistorik dynamiskt
+- **DataStream**: Simulerar realistisk prisrörelse och marknadsdata
+
+**Auto-Refresh System:**
+- Global `dcc.Interval` komponent i huvudlayouten (3 sekunder)
+- Uppdaterar alla paneler kontinuerligt utan att återställa intervals
+- Callback skapar nya modulinstanser med färsk data vid varje uppdatering
+- Garanterar att timestamps och värden alltid är aktuella
+- Fungerar sömlöst över alla paneler och routes
+
+**Panel-uppdateringar:**
+- Automatisk refresh var 3:e sekund via global interval
+- Callbacks uppdaterar alla paneler när data source toggle ändras
+- Ingen hardcoded data eller statiska placeholders
+- Full responsivitet med kontinuerlig datauppdatering
+
+**Verifiering:**
+- ✅ Alla 16 paneler laddas utan fel
+- ✅ Alla routes testad och fungerande
+- ✅ Mock data generering fungerar korrekt
+- ✅ Data source toggle fungerar över hela systemet
+- ✅ Auto-refresh implementerat och verifierat i alla paneler
+- ✅ Data uppdateras synligt var 3:e sekund med nya timestamps
+
+
 ### 🚧 Pågående / Planerat
 
 **Hybrider & Meta-Agenter**

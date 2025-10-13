@@ -41,6 +41,8 @@ app.layout = dbc.Container(
     [
         dcc.Location(id='url', refresh=False),
         dcc.Store(id='data-source-store', data='mock'),  # Store for data source state
+        # Global interval for auto-refresh - triggers panel updates every 3 seconds
+        dcc.Interval(id='global-refresh-interval', interval=3000, n_intervals=0),
         dbc.Row(
             [
                 dbc.Col(

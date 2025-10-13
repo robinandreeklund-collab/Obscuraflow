@@ -50,7 +50,7 @@ def create_panel():
             dbc.Col([
                 create_metric_card(
                     "Success Rate",
-                    f"{stats.get('success_rate', 0):.1f}%",
+                    stats.get('success_rate', '0%'),
                     icon="fas fa-check-circle"
                 )
             ], width=3)
@@ -79,11 +79,15 @@ def create_panel():
                     dbc.CardHeader("Lineage Performance", style={'backgroundColor': '#151932', 'color': '#00d9ff'}),
                     dbc.CardBody([
                         html.Div([
-                            html.P("🧬 Lineage Alpha: Gen 6, Fitness 0.92 (Best)", className="mb-2"),
-                            html.P("🧬 Lineage Beta: Gen 5, Fitness 0.85", className="mb-2"),
-                            html.P("🧬 Lineage Gamma: Gen 4, Fitness 0.78", className="mb-2"),
-                            html.P("🧬 Lineage Delta: Gen 7, Fitness 0.88", className="mb-2"),
-                            html.P("🧬 Lineage Epsilon: Gen 3, Fitness 0.72 (Retired)", className="mb-2")
+                            html.P(
+                                f"🧬 {lineage['name']}: Gen {lineage['generation']}, "
+                                f"Fitness {lineage['fitness']} "
+                                f"{'(Best)' if lineage['fitness'] > 0.90 else '(' + lineage['status'] + ')'}", 
+                                className="mb-2"
+                            )
+                            for lineage in tracker.get_lineage_performance()
+                        ] if tracker.get_lineage_performance() else [
+                            html.P("No lineage data available yet.", style={'color': '#9ca3af'})
                         ])
                     ])
                 ], className="mb-3")
