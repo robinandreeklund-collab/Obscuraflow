@@ -1,3 +1,7 @@
 {"timestamp": "2025-10-13T11:58:26.830661", "type": "Module Toggle", "component": "DataStream", "old_value": "False", "new_value": "True"}
 {"timestamp": "2025-10-13T11:58:26.848222", "type": "Agent Toggle", "component": "momentum_agent", "old_value": "False", "new_value": "True"}
 {"timestamp": "2025-10-13T11:58:26.848844", "type": "Parameter Change", "component": "FUSION_THRESHOLD", "old_value": "None", "new_value": "0.75"}
+{"timestamp": "2025-10-13T14:05:45.314233", "type": "Parameter Change", "component": "USE_MOCK_DATA", "old_value": "None", "new_value": "False"}
+{"timestamp": "2025-10-13T14:05:51.597964", "type": "Agent Toggle", "component": "momentum_agent", "old_value": "True", "new_value": "True"}
+{"timestamp": "2025-10-13T14:06:47.995792", "type": "Module Toggle", "component": "TrendingPool", "old_value": "False", "new_value": "True"}
+{"timestamp": "2025-10-13T14:06:50.320526", "type": "Module Toggle", "component": "VoteEngine", "old_value": "False", "new_value": "True"}
