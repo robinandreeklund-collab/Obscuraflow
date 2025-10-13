@@ -287,6 +287,32 @@ class TrendingPool:
             return True
         return False
     
+    def get_top_symbols(self, count: int = 50) -> List[str]:
+        """
+        Hämtar top N symboler baserat på score.
+        
+        Args:
+            count: Antal top-symboler att returnera
+        
+        Returns:
+            Lista med symboler sorterade efter score (högst först)
+        """
+        if not self.symbol_scores:
+            return []
+        
+        # Sortera efter score (högst först)
+        ranked = sorted(
+            self.symbol_scores.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+        
+        # Returnera top N symboler
+        top_symbols = [symbol for symbol, score in ranked[:count]]
+        
+        logger.debug(f"Returnerar top {count} symboler: {top_symbols[:10]}...")
+        return top_symbols
+    
     def get_pool_stats(self) -> Dict[str, Any]:
         """
         Hämtar statistik om hela poolen.
@@ -315,3 +341,12 @@ class TrendingPool:
             'top_symbol': {'symbol': ranked[0][0], 'score': round(ranked[0][1], 2)},
             'bottom_symbol': {'symbol': ranked[-1][0], 'score': round(ranked[-1][1], 2)}
         }
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Alias för get_pool_stats() för kompatibilitet.
+        
+        Returns:
+            Dict med poolstatistik
+        """
+        return self.get_pool_stats()

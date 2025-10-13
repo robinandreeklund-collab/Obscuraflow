@@ -86,7 +86,7 @@ class DataOrchestrator:
         if not use_mock_data:
             self.rest_batcher = RestBatcher(
                 api_key=api_key,
-                symbols=symbols,
+                symbols=self.symbols,
                 batch_size=batch_size,
                 batch_interval=batch_interval
             )
@@ -109,11 +109,11 @@ class DataOrchestrator:
         # Statistik
         self.stats = {
             'start_time': datetime.now(),
-            'total_symbols': len(symbols),
+            'total_symbols': len(self.symbols),
             'mode': 'mock' if use_mock_data else 'live'
         }
         
-        logger.info(f"DataOrchestrator initialiserad: {len(symbols)} symboler, "
+        logger.info(f"DataOrchestrator initialiserad: {len(self.symbols)} symboler, "
                    f"mode={self.stats['mode']}")
     
     async def start(self):
