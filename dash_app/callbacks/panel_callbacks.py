@@ -13,64 +13,29 @@ import config as root_config
 def register_panel_callbacks(app):
     """
     Registrerar en global auto-refresh callback som uppdaterar alla paneler automatiskt.
-    Använder panel-specifika intervals som redan finns i varje panel.
-    
-    Not: Dash visar console warnings när callbacks refererar till komponenter som inte finns
-    i den aktuella layouten. Detta är förväntat beteende och påverkar inte funktionaliteten.
-    Endast intervals som faktiskt finns i DOM kan trigga uppdateringar.
+    Använder en global interval komponent för att trigga uppdateringar.
     """
-    
-    # Lista över alla panel intervals som kan trigga uppdateringar
-    # Dessa måste matcha interval-IDs i panelerna
-    panel_intervals = [
-        'decision-core-enhanced-interval',  # Enhanced decision core uses this ID
-        'decision-core-interval',           # Original decision core  
-        'vote-panel-interval',
-        'sizing-panel-interval',
-        'timespan-panel-interval',
-        'portfolio-panel-interval',
-        'mutation-panel-interval',
-        'spectrum-panel-interval',
-        'lifecycle-panel-interval',
-        'governance-panel-interval',
-        'portfolio-intel-panel-interval',
-        'risk-panel-interval',
-        'system-flow-panel-interval',
-        'narrative-panel-interval',
-        'data-source-panel-interval',
-        'portfolio-dev-panel-interval'
-    ]
-    
-    # Skapa Inputs för alla möjliga intervals
-    # Dash hanterar automatiskt fall där intervallet inte finns i DOM
-    interval_inputs = [Input(interval_id, 'n_intervals') for interval_id in panel_intervals]
     
     @app.callback(
         [Output('page-header', 'children', allow_duplicate=True),
          Output('page-content', 'children', allow_duplicate=True)],
-        interval_inputs,
+        [Input('global-refresh-interval', 'n_intervals')],
         [State('url', 'pathname'),
          State('data-source-store', 'data')],
         prevent_initial_call=True
     )
-    def auto_update_all_panels(*args):
+    def auto_update_all_panels(n_intervals, pathname, data_source):
         """
-        Uppdaterar paneler automatiskt när något interval triggas.
-        Endast intervals som finns i aktuell layout kan faktiskt trigga denna callback.
+        Uppdaterar paneler automatiskt var 3:e sekund via global interval.
+        Detta säkerställer att alla paneler får färsk data regelbundet.
         """
-        # Kontrollera att callback faktiskt triggades av en komponent
+        # Kontrollera att callback faktiskt triggades
         ctx = callback_context
         if not ctx.triggered or ctx.triggered[0]['prop_id'] == '.':
             raise PreventUpdate
         
-        # De sista två argumenten är States (pathname och data_source)
-        pathname = args[-2]
-        data_source = args[-1]
-        
-        # Kontrollera om något interval faktiskt triggade
-        # (annars är alla None och vi ska inte uppdatera)
-        interval_values = args[:-2]  # Alla utom de två sista (States)
-        if all(v is None for v in interval_values):
+        # Skip if we don't have a pathname (shouldn't happen but safety check)
+        if not pathname:
             raise PreventUpdate
         
         # Update configs
@@ -78,5 +43,5 @@ def register_panel_callbacks(app):
         dash_config.USE_MOCK_DATA = use_mock
         root_config.USE_MOCK_DATA = use_mock
         
-        # Returnera uppdaterad panel
+        # Returnera uppdaterad panel med färsk data
         return route_page(pathname)
