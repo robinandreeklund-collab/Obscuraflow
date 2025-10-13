@@ -37,15 +37,16 @@ def create_panel():
     market_summary = data_stream.get_market_summary()
     quotes = market_summary['quotes']
     
-    # Initialize portfolio engine
-    portfolio_engine = PortfolioEngine(initial_capital=100000.0)
+    # Initialize portfolio engine with $1000 USD starting capital
+    INITIAL_CAPITAL = 1000.0
+    portfolio_engine = PortfolioEngine(initial_capital=INITIAL_CAPITAL)
     
     # Get portfolio stats
     try:
         portfolio_stats = portfolio_engine.get_stats()
     except:
         portfolio_stats = {
-            'total_value': 100000.0,
+            'total_value': INITIAL_CAPITAL,
             'realized_pnl': 0.0,
             'unrealized_pnl': 0.0,
             'total_positions': 0,
@@ -63,70 +64,31 @@ def create_panel():
         active_agents = 0
     
     # Calculate metrics
-    total_value = portfolio_stats.get('total_value', 100000.0)
+    total_value = portfolio_stats.get('total_value', INITIAL_CAPITAL)
     realized_pnl = portfolio_stats.get('realized_pnl', 0.0)
     unrealized_pnl = portfolio_stats.get('unrealized_pnl', 0.0)
     total_pnl = realized_pnl + unrealized_pnl
-    pnl_percent = (total_pnl / 100000.0) * 100 if total_value > 0 else 0.0
+    pnl_percent = (total_pnl / INITIAL_CAPITAL) * 100 if total_value > 0 else 0.0
     
-    # Get current positions
+    # Get current positions - START WITH NO POSITIONS
     positions_data = []
-    symbols = list(quotes.keys())[:5]  # Get top 5 symbols for demo
-    for i, symbol in enumerate(symbols):
-        quote = quotes[symbol]
-        current_price = quote.get('c', quote.get('current_price', 0))
-        
-        positions_data.append([
-            symbol,
-            f"{current_price:.2f}",
-            "0.25",  # Size
-            f"{current_price * 0.99:.2f}",  # Entry price (slightly lower)
-            f"+${(current_price * 0.25 * 0.01):.2f}",  # Unrealized P&L
-            f"Agent_{(i % 8) + 1:02d}",  # Agent ID
-            "Momentum" if i % 2 == 0 else "Reversal",  # Strategy
-            "0.85"  # Confidence
-        ])
+    # No initial holdings - positions will be populated as trades are executed
     
-    # Recent trades
+    # Recent trades - START EMPTY, will populate as system makes decisions
     recent_trades = []
-    now = datetime.now()
-    for i in range(10):
-        symbol = symbols[i % len(symbols)]
-        quote = quotes[symbol]
-        price = quote.get('c', quote.get('current_price', 0))
-        
-        recent_trades.append([
-            (now - timedelta(minutes=i*5)).strftime('%H:%M:%S'),
-            symbol,
-            "BUY" if i % 2 == 0 else "SELL",
-            "0.25",
-            f"{price:.2f}",
-            f"Agent_{(i % 8) + 1:02d}",
-            "15s" if i % 3 == 0 else "30s" if i % 3 == 1 else "1m",
-            f"{random.uniform(0.75, 0.95):.2f}",
-            "bull" if i % 2 == 0 else "neutral",
-            f"{random.randint(30, 80)}ms"
-        ])
+    # No initial trades - will be populated as agents make live trading decisions
     
-    # Agent contribution data
+    # Agent contribution data - START EMPTY
     agent_contribution = []
-    for i in range(8):
-        agent_id = f"Agent_{i+1:02d}"
-        agent_contribution.append([
-            agent_id,
-            f"{random.randint(5, 15)}",  # Trades
-            f"+${random.uniform(50, 500):.2f}",  # P&L
-            f"{random.uniform(0.65, 0.90):.2f}",  # Precision
-            f"{random.uniform(0.02, 0.08):.2f}",  # Risk %
-            "🟢" if i % 3 != 0 else "🟡"  # Status
-        ])
+    # No initial agent contributions - will accumulate as agents execute trades
+    # Data format: [Agent ID, Trades, P&L, Precision, Risk %, Status]
     
-    # Risk metrics
+    # Risk metrics - START AT ZERO (no positions yet)
     risk_metrics = {
-        'total_risk': 2.5,  # % of portfolio
-        'max_drawdown': 1.2,
-        'sharpe_ratio': 1.8,
-        'win_rate': 68.5
+        'total_risk': 0.0,  # % of portfolio (no positions)
+        'max_drawdown': 0.0,  # No drawdown yet
+        'sharpe_ratio': 0.0,  # No trades to calculate from
+        'win_rate': 0.0  # No trades yet
     }
     
     # Create PnL chart
@@ -311,17 +273,13 @@ def create_panel():
 
 
 def create_pnl_chart():
-    """Creates P&L over time chart"""
+    """Creates P&L over time chart - starts at $0 with no trading history"""
     import random
     
-    # Generate sample P&L data
+    # Generate empty P&L data - no trading activity yet
     hours = 24
     timestamps = [(datetime.now() - timedelta(hours=hours-i)).strftime('%H:%M') for i in range(hours)]
-    pnl_values = []
-    current_pnl = 0
-    for i in range(hours):
-        current_pnl += random.uniform(-200, 300)
-        pnl_values.append(current_pnl)
+    pnl_values = [0.0] * hours  # Start at $0, no trades yet
     
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -349,10 +307,10 @@ def create_pnl_chart():
 
 
 def create_risk_chart():
-    """Creates risk distribution pie chart"""
+    """Creates risk distribution pie chart - starts with 100% available (no positions)"""
     fig = go.Figure(data=[go.Pie(
-        labels=['Agent Risk', 'Position Risk', 'Market Risk', 'Available'],
-        values=[1.2, 0.8, 0.5, 2.5],
+        labels=['Agent Risk', 'Position Risk', 'Market Risk', 'Available Capital'],
+        values=[0.0, 0.0, 0.0, 100.0],  # 100% available, no risk taken yet
         hole=0.4,
         marker=dict(colors=['#ef4444', '#f59e0b', '#3b82f6', '#10b981'])
     )])
