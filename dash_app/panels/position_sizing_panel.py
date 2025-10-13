@@ -23,8 +23,8 @@ def create_panel():
     """
     from modules.sizing import Sizing
     from modules.data_stream.data_stream import get_data_stream
+    from modules.decision_core import DecisionCore
     from dash_app.config import USE_MOCK_DATA
-    import random
     
     sizing = Sizing(max_position_size=0.2, risk_per_trade=0.02, use_kelly=True)
     stats = sizing.get_stats()
@@ -34,21 +34,62 @@ def create_panel():
     market_summary = data_stream.get_market_summary()
     quotes = market_summary['quotes']
     
-    # Build current positions table from available symbols
-    positions_rows = []
-    available_symbols = list(quotes.keys())[:5]  # Use first 5 available symbols
-    for sym in available_symbols:
-        quote = quotes.get(sym, {})
-        price = quote.get('c', 100)
-        shares = random.randint(100, 300)
-        kelly_pct = f"{random.uniform(8, 16):.1f}%"
-        volatility = random.choice(['Low', 'Medium', 'High'])
-        allocation = f"${int(price * shares):,}"
-        positions_rows.append([sym, f'{shares} shares', kelly_pct, volatility, allocation])
+    # Get agent decisions from DecisionCore
+    decision_core = DecisionCore(use_live_data=True)
+    agent_activity = decision_core.get_agent_activity()
     
-    # Fallback if no data
+    # Build positions table from BUY decisions
+    positions_rows = []
+    buy_decisions = []
+    
+    # Extract all BUY decisions
+    for agent_id, activity in agent_activity.items():
+        for decision_dict in activity.get('decisions', []):
+            if decision_dict.get('decision', '').lower() == 'buy':
+                buy_decisions.append(decision_dict)
+    
+    # Get unique symbols with BUY signals and calculate position size
+    symbol_decisions = {}
+    for decision in buy_decisions:
+        symbol = decision.get('symbol')
+        if symbol and symbol not in symbol_decisions:
+            symbol_decisions[symbol] = decision
+    
+    # Create position rows from BUY decisions
+    for symbol, decision in list(symbol_decisions.items())[:5]:  # Top 5 positions
+        quote = quotes.get(symbol, {})
+        price = quote.get('c', 100)
+        confidence = decision.get('confidence', 50)
+        
+        # Use Sizing module to calculate position
+        win_rate = confidence / 100.0
+        avg_win = 0.05  # 5% average win assumption
+        avg_loss = 0.02  # 2% average loss assumption
+        volatility = abs(quote.get('dp', 0)) / 100.0  # Use daily percent change as volatility proxy
+        
+        # Calculate Kelly percentage
+        kelly_fraction = sizing.calculate_kelly(win_rate, avg_win, avg_loss) if win_rate > 0 else 0.0
+        kelly_pct = f"{kelly_fraction * 100:.1f}%"
+        
+        # Determine volatility classification
+        if volatility < 0.02:
+            vol_class = 'Low'
+        elif volatility < 0.05:
+            vol_class = 'Medium'
+        else:
+            vol_class = 'High'
+        
+        # Calculate shares based on Kelly and price
+        capital = 100000  # Starting capital
+        position_value = capital * kelly_fraction
+        shares = int(position_value / price) if price > 0 else 0
+        
+        allocation = f"${int(price * shares):,}"
+        positions_rows.append([symbol, f'{shares} shares', kelly_pct, vol_class, allocation])
+    
+    # Fallback if no BUY decisions available
     if not positions_rows:
-        positions_rows = [['N/A', '0 shares', '0%', 'N/A', '$0']]
+        positions_rows = [['N/A', '0 shares', '0%', 'Waiting for signals', '$0']]
     
     header = create_header(
         "Position Sizing",

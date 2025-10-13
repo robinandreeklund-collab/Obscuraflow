@@ -25,10 +25,10 @@ def create_panel():
     from modules.decision_core import DecisionCore
     from modules.data_stream.data_stream import get_data_stream
     from dash_app.config import USE_MOCK_DATA
-    import random
+    from datetime import datetime
     
-    # Initialize with mock data
-    decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4)
+    # Initialize with live data
+    decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4, use_live_data=True)
     stats = decision_core.get_stats()
     
     # Get market data using DataStream
@@ -36,21 +36,53 @@ def create_panel():
     market_summary = data_stream.get_market_summary()
     quotes = market_summary['quotes']
     
-    # Build recent decisions table from available symbols
-    recent_decisions_rows = []
-    available_symbols = list(quotes.keys())[:5]  # Use first 5 available symbols
-    for sym in available_symbols:
-        decision = random.choice(['BUY', 'SELL', 'HOLD'])
-        confidence = f"{random.uniform(65, 95):.1f}%"
-        status = '✓ Consensus' if random.random() > 0.3 else '⚠ Conflict'
-        recent_decisions_rows.append([sym, decision, confidence, status])
+    # Get agent activity and extract recent decisions
+    agent_activity = decision_core.get_agent_activity()
     
-    # Fallback if no data
+    # Build recent decisions table from actual agent decisions
+    recent_decisions_rows = []
+    symbol_decisions = {}  # Track latest decision per symbol
+    
+    # Collect decisions across all agents
+    for agent_id, activity in agent_activity.items():
+        for decision_dict in activity.get('decisions', []):
+            symbol = decision_dict.get('symbol')
+            if symbol:
+                # Keep track of the latest decision for each symbol
+                if symbol not in symbol_decisions:
+                    symbol_decisions[symbol] = []
+                symbol_decisions[symbol].append(decision_dict)
+    
+    # Analyze consensus for each symbol
+    for symbol, decisions in list(symbol_decisions.items())[:5]:  # Top 5 symbols with decisions
+        # Count decision types
+        buy_count = sum(1 for d in decisions if d.get('decision', '').lower() == 'buy')
+        sell_count = sum(1 for d in decisions if d.get('decision', '').lower() == 'sell')
+        hold_count = sum(1 for d in decisions if d.get('decision', '').lower() == 'hold')
+        
+        # Determine consensus
+        total = len(decisions)
+        if buy_count > sell_count and buy_count > hold_count:
+            decision = 'BUY'
+            status = '✓ Consensus' if buy_count / total > 0.6 else '⚠ Conflict'
+        elif sell_count > buy_count and sell_count > hold_count:
+            decision = 'SELL'
+            status = '✓ Consensus' if sell_count / total > 0.6 else '⚠ Conflict'
+        else:
+            decision = 'HOLD'
+            status = '✓ Consensus' if hold_count / total > 0.6 else '⚠ Conflict'
+        
+        # Calculate average confidence
+        avg_confidence = sum(d.get('confidence', 0) for d in decisions) / total
+        confidence = f"{avg_confidence:.1f}%"
+        
+        recent_decisions_rows.append([symbol, decision, confidence, status])
+    
+    # Fallback if no decisions available
     if not recent_decisions_rows:
-        recent_decisions_rows = [['N/A', 'HOLD', '0.0%', '⚠ No Data']]
+        recent_decisions_rows = [['N/A', 'HOLD', '0.0%', '⏳ Waiting for agents']]
     
     # Get agent activity - dynamically generated from decision core
-    agent_activity = decision_core.get_agent_activity()
     agent_activity_items = []
     
     # Map agents to icons
