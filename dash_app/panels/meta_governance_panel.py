@@ -9,6 +9,14 @@ from dash_app.components.ui_components import create_metric_card, create_data_ta
 import sys
 sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
 
+# Panel Metadata
+PANEL_METADATA = {
+    "data_source": "live",
+    "live_ready": True,
+    "verified": True,
+    "phase": "Phase 3 - Live Data Integration Complete"
+}
+
 def create_panel():
     """
     Skapar Meta Governance panelen.

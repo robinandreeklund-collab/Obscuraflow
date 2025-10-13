@@ -82,7 +82,8 @@ class DecisionCore:
         self,
         min_confidence: float = 50.0,
         conflict_threshold: float = 0.5,
-        generate_sample_decisions: bool = True
+        generate_sample_decisions: bool = False,
+        use_live_data: bool = True
     ):
         """
         Initierar DecisionCore.
@@ -91,9 +92,11 @@ class DecisionCore:
             min_confidence: Minsta konfidensgrad (0-100)
             conflict_threshold: Andel motsatta beslut för konflikt (0-1)
             generate_sample_decisions: Om True, generera sample beslut för demonstration
+            use_live_data: Om True, använd live data från DataStream och agenter
         """
         self.min_confidence = min_confidence
         self.conflict_threshold = conflict_threshold
+        self.use_live_data = use_live_data
         
         # Storage för beslut
         self.decisions: List[AgentDecision] = []
@@ -107,12 +110,15 @@ class DecisionCore:
             'conflicts_detected': 0
         }
         
-        if generate_sample_decisions:
+        # Initialize agents and data stream if using live data
+        if use_live_data:
+            self._initialize_live_system()
+        elif generate_sample_decisions:
             self._generate_sample_decisions()
         
         logger.info(
             f"DecisionCore initialiserad (min_confidence={min_confidence}, "
-            f"conflict_threshold={conflict_threshold})"
+            f"conflict_threshold={conflict_threshold}, use_live_data={use_live_data})"
         )
     
     def _generate_sample_decisions(self) -> None:
@@ -148,6 +154,121 @@ class DecisionCore:
             self.add_decision(decision)
         
         logger.info(f"Genererade {num_decisions} sample beslut från {len(agents)} agenter")
+    
+    def _initialize_live_system(self) -> None:
+        """
+        Initialiserar live-systemet med DataStream och agenter.
+        """
+        try:
+            # Import här för att undvika cirkulära imports
+            from modules.data_stream.data_stream import get_data_stream
+            from agents.agent_registry import get_registry
+            
+            # Försök hämta config, fallback till mock om den inte finns
+            try:
+                from dash_app.config import USE_MOCK_DATA
+            except:
+                USE_MOCK_DATA = True
+                logger.info("Config inte tillgänglig, använder mock data")
+            
+            # Hämta DataStream
+            self.data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+            
+            # Hämta agent registry
+            self.agent_registry = get_registry()
+            
+            # Skapa agentinstanser för analys
+            self._active_agents = {}
+            agent_types = [
+                'momentum_agent', 'reversal_agent', 'breakout_agent',
+                'echo_agent', 'vox_agent', 'fractalis_agent'
+            ]
+            
+            for agent_type in agent_types:
+                try:
+                    agent_info = self.agent_registry.get_agent_info(agent_type)
+                    if agent_info:
+                        agent_class = agent_info['class']
+                        agent_instance = agent_class(agent_id=agent_type)
+                        self._active_agents[agent_type] = agent_instance
+                        logger.info(f"Aktiverade agent: {agent_type}")
+                except Exception as e:
+                    logger.warning(f"Kunde inte aktivera agent {agent_type}: {e}")
+            
+            logger.info(f"Live-system initialiserat med {len(self._active_agents)} agenter")
+            
+            # Generera initiala beslut från live data
+            self._refresh_live_decisions()
+            
+        except Exception as e:
+            logger.error(f"Kunde inte initialisera live-system: {e}")
+            self.use_live_data = False
+            # Fallback till sample decisions om live inte fungerar
+            self._generate_sample_decisions()
+    
+    def _refresh_live_decisions(self) -> None:
+        """
+        Uppdaterar beslut baserat på live marknadsdata och agentanalys.
+        """
+        if not self.use_live_data or not hasattr(self, 'data_stream'):
+            return
+        
+        try:
+            # Rensa gamla beslut för att få fräsch data
+            old_count = len(self.decisions)
+            self.decisions = []
+            
+            # Hämta live marknadsdata
+            market_summary = self.data_stream.get_market_summary()
+            quotes = market_summary.get('quotes', {})
+            
+            # Välj ett subset av symboler att analysera (topp 8)
+            symbols = list(quotes.keys())[:8]
+            
+            decisions_made = 0
+            for symbol in symbols:
+                quote_data = quotes.get(symbol, {})
+                
+                # Förbered marknadsdata för agenter
+                market_data = {
+                    'price': quote_data.get('c', 0),  # current price
+                    'volume': quote_data.get('v', 0),  # volume
+                    'trend_score': (quote_data.get('c', 0) - quote_data.get('o', 0)) / max(quote_data.get('o', 1), 0.01),
+                    'price_change_pct': quote_data.get('dp', 0) / 100.0,  # daily percent change
+                    'high': quote_data.get('h', 0),
+                    'low': quote_data.get('l', 0),
+                    'open': quote_data.get('o', 0)
+                }
+                
+                # Låt varje agent analysera symbolen
+                for agent_id, agent in self._active_agents.items():
+                    try:
+                        analysis = agent.analyze(symbol, market_data)
+                        
+                        # Konvertera till AgentDecision
+                        decision = AgentDecision(
+                            agent_id=analysis['agent_id'],
+                            symbol=symbol,
+                            decision=analysis['decision'],
+                            confidence=analysis['confidence'] * 100,  # Convert to 0-100 scale
+                            reasoning=analysis['reasoning'],
+                            metadata=analysis.get('metrics', {})
+                        )
+                        
+                        # Lägg till beslut (med validering)
+                        if self.add_decision(decision):
+                            decisions_made += 1
+                            
+                    except Exception as e:
+                        logger.warning(f"Agent {agent_id} kunde inte analysera {symbol}: {e}")
+            
+            logger.info(
+                f"Live decisions refresh: {decisions_made} nya beslut genererade "
+                f"(rensade {old_count} gamla)"
+            )
+            
+        except Exception as e:
+            logger.error(f"Kunde inte refresha live beslut: {e}")
     
     def add_decision(self, decision: AgentDecision) -> bool:
         """
@@ -376,10 +497,15 @@ class DecisionCore:
     def get_agent_activity(self) -> Dict[str, Dict[str, Any]]:
         """
         Hämtar aktivitet per agent.
+        Refreshar live decisions vid varje anrop för att hålla data aktuell.
         
         Returns:
             Dict med agent_id -> activity stats
         """
+        # Refresh decisions from live data if enabled
+        if self.use_live_data:
+            self._refresh_live_decisions()
+        
         agent_activity = {}
         
         for decision in self.decisions:

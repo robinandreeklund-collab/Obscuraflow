@@ -36,6 +36,10 @@ server = app.server
 from dash_app.callbacks.panel_callbacks import register_panel_callbacks
 register_panel_callbacks(app)
 
+# Import and register settings panel callbacks
+from dash_app.callbacks.settings_callbacks import register_settings_callbacks
+register_settings_callbacks(app)
+
 # Huvudlayout
 app.layout = dbc.Container(
     [

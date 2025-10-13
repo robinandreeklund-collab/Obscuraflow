@@ -13,6 +13,14 @@ import sys
 sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
 
 
+# Panel Metadata
+PANEL_METADATA = {
+    "data_source": "live",
+    "live_ready": True,
+    "verified": True,
+    "phase": "Phase 3 - Live Data Integration Complete"
+}
+
 def create_panel():
     """
     Skapar Portfolio Development panelen med detaljerad historik och trades.
