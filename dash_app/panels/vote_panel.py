@@ -46,7 +46,9 @@ def create_panel():
     
     # Build recent votes table from actual agent decisions
     recent_votes_rows = []
-    for decision in agent_activity[:15]:  # Last 15 decisions
+    # Convert dict to list if needed (DecisionCore returns dict)
+    activity_list = list(agent_activity.values()) if isinstance(agent_activity, dict) else agent_activity
+    for decision in activity_list[:15]:  # Last 15 decisions
         timestamp = decision.get('timestamp', datetime.now().strftime('%H:%M:%S'))
         symbol = decision.get('symbol', 'N/A')
         agent = decision.get('agent_id', 'N/A')
@@ -95,7 +97,7 @@ def create_panel():
     
     # Get agent weights from historical decisions (last 24 hours)
     agent_weight_history = {}
-    for decision in agent_activity:
+    for decision in activity_list:
         agent_id = decision.get('agent_id', 'unknown')
         if agent_id not in agent_weight_history:
             agent_weight_history[agent_id] = []
@@ -132,7 +134,7 @@ def create_panel():
     
     # Voting accuracy chart from actual agent performance
     agent_accuracies = {}
-    for decision in agent_activity:
+    for decision in activity_list:
         agent_id = decision.get('agent_id', 'unknown')
         outcome = decision.get('outcome', '')
         if agent_id not in agent_accuracies:
@@ -279,8 +281,8 @@ def create_panel():
                                     str(counts['total'] - counts['correct']),
                                     f"{(counts['correct'] / counts['total'] * 100) if counts['total'] > 0 else 0:.1f}%",
                                     f"{sum(agent_weight_history.get(agent_id, [1.0])) / len(agent_weight_history.get(agent_id, [1.0])):.2f}",
-                                    f"+${sum([d.get('pnl', 0) for d in agent_activity if d.get('agent_id') == agent_id]):.2f}",
-                                    f"+${sum([d.get('pnl', 0) for d in agent_activity if d.get('agent_id') == agent_id]) / counts['total'] if counts['total'] > 0 else 0:.2f}"
+                                    f"+${sum([d.get('pnl', 0) for d in activity_list if d.get('agent_id') == agent_id]):.2f}",
+                                    f"+${sum([d.get('pnl', 0) for d in activity_list if d.get('agent_id') == agent_id]) / counts['total'] if counts['total'] > 0 else 0:.2f}"
                                 ]
                                 for agent_id, counts in list(agent_accuracies.items())[:8]
                             ] if agent_accuracies else [['No Data', '0', '0', '0', '0%', '1.00', '$0', '$0']]
