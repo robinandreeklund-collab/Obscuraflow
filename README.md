@@ -1041,18 +1041,19 @@ Kopplingar:
 13. ✅ **Narrative Engine** - Händelseflöde och berättelse
 14. ✅ **Data Source Panel** - Live/Mock data toggle och konfiguration
 15. ✅ **Portfolio Development** - Utvecklingsanalys och evolution
+16. ✅ **Settings Panel** - Systemkonfiguration och modulkontroll
 
 ### 📊 Detaljerad Panelöversikt
 
 #### 🔴 Live Data Integration - Phase 3 Status
 
-**Verifieringsstatus:** ✅ **ALLA 15 PANELER VERIFIERADE**
+**Verifieringsstatus:** ✅ **ALLA 16 PANELER VERIFIERADE**
 
 Alla Dash-paneler har genomgått Live Data Integration Phase 3 verifiering och bekräftas vara fullt integrerade med live-data källor. Ingen mockup eller dummy-data används utöver den konfigurerbara Mock/Live toggle som finns i datakällan.
 
 **Sammanfattning:**
-- **Totalt antal paneler:** 15 (+ 1 enhanced variant = 16)
-- **Verifierade paneler:** 15/15 (100%)
+- **Totalt antal paneler:** 16 (+ 1 enhanced variant = 17 totalt)
+- **Verifierade paneler:** 16/16 (100%)
 - **Metadata tillagd:** ✅ Alla paneler har `PANEL_METADATA` med `"data_source": "live"`
 - **Auto-refresh:** ✅ Alla paneler har automatisk uppdatering (2-5 sekunder)
 - **Verifieringsskript:** `verify_panel_live_data.py` tillgängligt för framtida kontroller
@@ -1060,6 +1061,7 @@ Alla Dash-paneler har genomgått Live Data Integration Phase 3 verifiering och b
 **Datakällor:**
 - **Mock/Live Toggle:** 8 paneler (använder `get_data_stream(use_mock=USE_MOCK_DATA)`)
 - **Live Module Data:** 7 paneler (använder direkt `module.get_stats()`)
+- **Live System Status:** 1 panel (Settings - systemkonfiguration och övervakning)
 
 **Verifierade komponenter per panel:**
 - ✅ Live datapunkter dokumenterade
@@ -1657,6 +1659,90 @@ Alla Dash-paneler har genomgått Live Data Integration Phase 3 verifiering och b
 - ✅ Tabular data display
 - ✅ Interactive plotly graphs
 
+#### 16. Settings Panel (`/settings`)
+**Modul:** System configuration and control  
+**Funktioner:**
+- ✅ Module control with on/off toggles
+- ✅ Agent management and status monitoring
+- ✅ System parameter configuration
+- ✅ Panel control and refresh settings
+- ✅ Real-time activity logging
+- ✅ System health monitoring
+
+**Visade Datapunkter:**
+- Active Modules: Antal aktiva moduler (10/10)
+- Active Agents: Antal aktiva agenter (7/8)
+- Active Panels: Antal aktiva paneler (15/15)
+- System Health: Övergripande systemhälsa
+- Module Status: Status för varje modul med toggle
+- Agent Performance: Accuracy och confidence per agent
+- Parameter Values: Aktuella systeminställningar
+- Recent Changes: Senaste konfigurationsändringar
+- API Status: REST och WebSocket status
+- Portfolio Value: Totalt portföljvärde
+
+**Funktionalitet:**
+- **Module Control:** Toggle för att aktivera/avaktivera moduler
+- **Agent Control:** Hantera agenter individuellt med status och metrics
+- **Parameters:** Konfigurera Data Stream, Fusion, Sizing, Vote Engine
+- **Panel Control:** Hantera paneler, refresh-rates och modes
+- **Activity Log:** Historik över alla systemändringar
+- **Real-time Updates:** Live status för alla komponenter
+
+**Konfigurerbara Parametrar:**
+
+*Data Stream:*
+- Live Data toggle (Mock/Live)
+- Batch Size (5-50)
+- Batch Interval (1-60 sec)
+- Max WebSocket Subscriptions (10-50)
+
+*Fusion:*
+- Fusion Mode (Majority/Weighted/Consensus)
+- Fusion Threshold (0.5-1.0)
+- Conflict Resolution method
+
+*Sizing:*
+- Sizing Method (Fixed/Volatility/Confidence)
+- Max Position Size (0.01-1.0)
+- Risk Budget (1-100%)
+
+*Vote Engine:*
+- Vote Method (Score/Weight/Regime)
+- Min Vote Score (0.1-1.0)
+
+**Integrationspunkter:**
+- → Styr: Alla moduler och agenter
+- ← Tar emot: Status från alla system komponenter
+- ↔ Loggar: Alla konfigurationsändringar
+- → Tillhandahåller: Central kontrollpunkt för systemet
+
+**Beroenden:** Alla moduler och agenter  
+**Auto-refresh:** 5 sekunder  
+**Status:** ✅ Klar - Central systemkonfiguration och övervakning
+
+**Live Data Verification (Phase 3):** ✅ VERIFIED  
+**Data Source:** Live System Status  
+**Verified Data Points:**
+- ✅ Active Modules (10/10)
+- ✅ Active Agents (7/8)
+- ✅ Active Panels (15/15)
+- ✅ System Health Status
+- ✅ Module Status with toggles
+- ✅ Agent Performance metrics
+- ✅ Parameter configurations
+- ✅ Activity log entries
+
+**Verified Functions:**
+- ✅ Real-time system monitoring
+- ✅ Module control toggles
+- ✅ Agent management
+- ✅ Parameter configuration sliders
+- ✅ Activity logging
+- ✅ Auto-refresh every 5 seconds
+- ✅ Tabular data display
+- ✅ Status indicators
+
 ---
 
 ## 🔄 Systemflöde med Statusöversikt
@@ -1747,9 +1833,10 @@ Alla Dash-paneler har genomgått Live Data Integration Phase 3 verifiering och b
         └─ System narrative
 
 [10] 📊 VISUALIZATION & MONITORING
-    └─ Dash Dashboard (15 paneler) ✅
+    └─ Dash Dashboard (16 paneler) ✅
         ├─ Real-time updates (2-5s intervals)
         ├─ Live/Mock data toggle
+        ├─ Settings Panel för systemkonfiguration
         └─ Komplett systemöversikt
 
 ═══════════════════════════════════════════════════════════════════════════════

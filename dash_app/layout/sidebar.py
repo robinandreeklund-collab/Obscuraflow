@@ -124,6 +124,16 @@ def create_sidebar():
                             href="/narrative",
                             className="sidebar-nav-link"
                         ),
+                        
+                        html.Hr(style={'borderColor': '#374151', 'margin': '10px 0'}),
+                        
+                        html.Div("⚙️ SYSTEM", style={'color': '#9ca3af', 'fontSize': '12px', 'marginBottom': '10px', 'textTransform': 'uppercase'}),
+                        
+                        dbc.NavLink(
+                            [html.I(className="fas fa-cog me-2"), "Settings"],
+                            href="/settings",
+                            className="sidebar-nav-link"
+                        ),
                     ],
                     vertical=True,
                     pills=True,
