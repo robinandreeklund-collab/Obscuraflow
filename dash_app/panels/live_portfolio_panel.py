@@ -80,9 +80,10 @@ def create_panel():
     recent_trades = []
     agent_contribution = []
     
-    # Track agent contributions
+    # Track agent contributions - separate realized and unrealized
     agent_trade_counts = {}
-    agent_pnl = {}
+    agent_realized_pnl = {}  # P&L from closed positions
+    agent_unrealized_pnl = {}  # P&L from open positions
     
     # Process each decision and create trade entries
     for agent_id, activity in agent_activity.items():
@@ -128,7 +129,7 @@ def create_panel():
             # Track agent contributions
             if agent_id not in agent_trade_counts:
                 agent_trade_counts[agent_id] = 0
-                agent_pnl[agent_id] = 0.0
+                agent_realized_pnl[agent_id] = 0.0
             
             agent_trade_counts[agent_id] += 1
             
@@ -156,7 +157,7 @@ def create_panel():
                     position = open_positions[symbol]
                     # Calculate realized P&L
                     pnl_impact = (current_price - position['entry_price']) * min(size, position['size']) * 100
-                    agent_pnl[agent_id] += pnl_impact
+                    agent_realized_pnl[agent_id] += pnl_impact
                     
                     # Reduce or close position
                     if size >= position['size']:
@@ -177,12 +178,11 @@ def create_panel():
         unrealized_pnl = (current_price - entry_price) * size * 100
         total_unrealized_pnl += unrealized_pnl
         
-        # Add to agent P&L tracking (unrealized)
+        # Track unrealized P&L per agent
         agent_id = position['agent']
-        if agent_id in agent_pnl:
-            agent_pnl[agent_id] += unrealized_pnl
-        else:
-            agent_pnl[agent_id] = unrealized_pnl
+        if agent_id not in agent_unrealized_pnl:
+            agent_unrealized_pnl[agent_id] = 0.0
+        agent_unrealized_pnl[agent_id] += unrealized_pnl
         
         positions_data.append([
             symbol,
@@ -195,28 +195,33 @@ def create_panel():
             f"{((current_price - entry_price) / entry_price * 100):+.1f}%"
         ])
     
-    # Build agent contribution table
-    for agent_id in sorted(agent_trade_counts.keys(), key=lambda x: agent_pnl.get(x, 0), reverse=True):
-        trades = agent_trade_counts[agent_id]
-        pnl = agent_pnl.get(agent_id, 0.0)
+    # Build agent contribution table - show ALL active agents
+    all_agent_ids = set(agent_activity.keys())  # All agents that have been active
+    
+    for agent_id in sorted(all_agent_ids, key=lambda x: agent_realized_pnl.get(x, 0) + agent_unrealized_pnl.get(x, 0), reverse=True):
+        trades = agent_trade_counts.get(agent_id, 0)
+        realized_pnl = agent_realized_pnl.get(agent_id, 0.0)
+        unrealized_pnl = agent_unrealized_pnl.get(agent_id, 0.0)
+        total_agent_pnl = realized_pnl + unrealized_pnl
+        
         # Precision and risk metrics would come from Self-Critique module in production
         # For now, derive from actual performance data
-        precision = min(95.0, 65.0 + (pnl / max(trades, 1)) * 2) if pnl > 0 else 50.0
-        risk = max(2.0, min(15.0, 10.0 - (pnl / 1000)))  # Lower risk for profitable agents
+        precision = min(95.0, 65.0 + (total_agent_pnl / max(trades, 1)) * 2) if total_agent_pnl > 0 else 50.0
+        risk = max(2.0, min(15.0, 10.0 - (total_agent_pnl / 1000)))  # Lower risk for profitable agents
         status = '🟢 Active' if trades > 0 else '⚪ Idle'
         
         agent_contribution.append([
             agent_id,
             trades,
-            f"${pnl:+.2f}",
+            f"${total_agent_pnl:+.2f}",
             f"{precision:.1f}%",
             f"{risk:.1f}%",
             status
         ])
     
     # Calculate portfolio metrics based on actual tracked positions
-    total_realized_pnl = sum(agent_pnl.get(agent_id, 0.0) for agent_id in agent_trade_counts.keys()) - total_unrealized_pnl
-    total_pnl = total_unrealized_pnl + total_realized_pnl
+    total_realized_pnl = sum(agent_realized_pnl.values())
+    total_pnl = total_realized_pnl + total_unrealized_pnl
     total_value = INITIAL_CAPITAL + total_pnl
     pnl_percent = (total_pnl / INITIAL_CAPITAL) * 100 if INITIAL_CAPITAL > 0 else 0.0
     
@@ -226,7 +231,7 @@ def create_panel():
         'total_risk': (total_position_value / total_value) * 100 if total_value > 0 else 0.0,
         'max_drawdown': abs(min(0, total_pnl)) / INITIAL_CAPITAL * 100,
         'sharpe_ratio': (total_pnl / INITIAL_CAPITAL) / 0.15 if total_pnl > 0 else 0.0,  # Simplified
-        'win_rate': (len([p for p in agent_pnl.values() if p > 0]) / len(agent_pnl)) * 100 if agent_pnl else 0.0
+        'win_rate': (len([p for p in agent_realized_pnl.values() if p > 0]) / len(agent_realized_pnl)) * 100 if agent_realized_pnl else 0.0
     }
     
     # Create PnL chart with actual data
