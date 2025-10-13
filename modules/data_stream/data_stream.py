@@ -516,9 +516,9 @@ class DataStream:
 
 # Factory function för DataStream (DataProvider-kompatibel)
 def get_data_stream(use_mock: Optional[bool] = None, api_key: Optional[str] = None, 
-                    symbols: Optional[List[str]] = None) -> DataStream:
+                    symbols: Optional[List[str]] = None):
     """
-    Skapar en DataStream-instans med konfigurerbara parametrar.
+    Skapar en DataStream-instans eller DataOrchestrator beroende på konfiguration.
     
     Args:
         use_mock: Om True, använd simulerad data. Om None, använd från config
@@ -526,8 +526,69 @@ def get_data_stream(use_mock: Optional[bool] = None, api_key: Optional[str] = No
         symbols: Lista av symboler att övervaka. Om None, använd från config
     
     Returns:
-        DataStream instans konfigurerad för mock eller live data
+        DataStream instans (mock) eller DataOrchestrator (live) konfigurerad för data-hämtning
     """
+    # Importera config här för att undvika cirkulära imports
+    try:
+        import sys
+        import os
+        # Lägg till project root i path
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+        
+        from config import FINNHUB_API_KEY, USE_MOCK_DATA, DEFAULT_SYMBOLS
+    except ImportError:
+        # Fallback
+        FINNHUB_API_KEY = ""
+        USE_MOCK_DATA = True
+        DEFAULT_SYMBOLS = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'AMD']
+    
+    # Bestäm parametrar
+    use_mock_data = use_mock if use_mock is not None else USE_MOCK_DATA
+    api_key_to_use = api_key or FINNHUB_API_KEY
+    symbols_to_use = symbols or DEFAULT_SYMBOLS
+    
+    logger.info(f"Skapar data stream: mock={use_mock_data}, symbols={len(symbols_to_use)}")
+    
+    if use_mock_data:
+        # Använd traditionell DataStream för mock data
+        return DataStream(
+            api_key=api_key_to_use,
+            symbols=symbols_to_use,
+            use_mock_data=True
+        )
+    else:
+        # Använd DataOrchestrator för live data med batching och WebSocket
+        try:
+            from modules.data_stream.orchestrator import DataOrchestrator
+            
+            orchestrator = DataOrchestrator(
+                api_key=api_key_to_use,
+                symbols=symbols_to_use,
+                use_mock_data=False,
+                batch_size=10,
+                batch_interval=10.0,
+                max_ws_subscriptions=50,
+                ws_rotation_interval=12.0
+            )
+            
+            # Starta orchestrator i bakgrunden
+            # Notera: Detta kräver att anropande kod kör i async context
+            # För synkron användning, startar vi inte automatiskt
+            logger.info("DataOrchestrator skapad (använd async för att starta)")
+            
+            return orchestrator
+            
+        except Exception as e:
+            logger.error(f"Kunde inte skapa DataOrchestrator: {e}")
+            logger.info("Faller tillbaka på mock data")
+            return DataStream(
+                api_key=api_key_to_use,
+                symbols=symbols_to_use,
+                use_mock_data=True
+            )
     # Import config här för att undvika cirkulärer imports
     try:
         import sys
