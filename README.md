@@ -1601,6 +1601,138 @@ AGENT MANAGEMENT
 
 ---
 
+## 📡 Live Data Integration
+
+Obscuraflow använder ett sofistikerat system för live-datainhämtning från Finnhub API med intelligent symbolhantering och rotation.
+
+### 🎯 Datakälla: Finnhub API
+
+**REST API:**
+- Endpoint: `https://finnhub.io/api/v1`
+- Rate limit: 60 anrop/minut (free tier)
+- Data: Quote snapshots, företagsprofiler, historisk data
+
+**WebSocket API:**
+- Endpoint: `wss://ws.finnhub.io`
+- Max subscriptions: 50 symboler samtidigt
+- Data: Realtids tick-data med pris och volym
+
+### 📊 Symboluniversum: NASDAQ-100
+
+**Symbol Management:**
+- **Fil:** `modules/data_stream/config/nasdaq100_symbols.yaml`
+- **Innehåll:** 99 NASDAQ-100 aktier (AAPL, MSFT, GOOGL, NVDA, META, etc.)
+- **Loader:** `modules/data_stream/universe_loader.py`
+  - Laddar symboler från YAML vid systemstart
+  - Caching för prestanda
+  - Fallback till minimal lista vid fel
+  - Validering av symbolformat
+
+**Exempel från nasdaq100_symbols.yaml:**
+```yaml
+nasdaq_100:
+  - AAPL   # Apple Inc.
+  - ABNB   # Airbnb, Inc.
+  - ADBE   # Adobe Inc.
+  - AMD    # Advanced Micro Devices, Inc.
+  - AMZN   # Amazon.com, Inc.
+  # ... (99 symboler totalt)
+```
+
+### 🔄 REST Batching & Rate Limiting
+
+**RestBatcher** (`modules/data_stream/rest_batcher.py`):
+- **Strategi:** Delar upp universum i batcher om 10 symboler
+- **Intervall:** Kör en batch var 10:e sekund
+- **Rate limiting:** Max 60 API-anrop/minut (respekterar Finnhub-gränser)
+- **Funktion:** Hämtar snapshot-data för alla symboler i rotation
+
+**Flöde:**
+1. Laddar NASDAQ-100 universum (99 symboler)
+2. Delar upp i ~10 batcher (10 symboler per batch)
+3. Kör batch 1 → vänta 10s → batch 2 → ... → batch 10 → börja om
+4. Varje symbol får uppdaterad data var ~100:e sekund
+
+### 📡 WebSocket Subscriptions & Rotation
+
+**WebSocketHandler** (`modules/data_stream/ws_handler.py`):
+- **Max subscriptions:** 50 symboler samtidigt (Finnhub-gräns)
+- **Rotationsintervall:** 12 sekunder
+- **Intelligens:** Subscribar endast på top-symboler från TrendingPool
+
+**Subscription Rotation:**
+1. TrendingPool rankar symboler baserat på trend_score (volym, momentum, volatilitet)
+2. Väljer topp 50 symboler
+3. Jämför med aktiva subscriptions:
+   - Avsubscriberar symboler som inte längre är i topp 50
+   - Subscribar på nya top-symboler
+4. Roterar var 12:e sekund för att följa marknadens dynamik
+
+**Tick-data:**
+- Realtids pris och volymdata
+- Cachning av senaste 100 ticks per symbol
+- Automatisk rensning av gammal data (>30 sekunder)
+- Integreras med TrendingPool för kortterm-analys
+
+### 🎼 Orchestration
+
+**DataOrchestrator** (`modules/data_stream/orchestrator.py`):
+Koordinerar hela dataflödet:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              DATA ORCHESTRATOR                          │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────────┐         ┌────────────────────┐   │
+│  │  RestBatcher    │         │  WebSocketHandler  │   │
+│  │  • 99 symboler  │         │  • 50 top symboler │   │
+│  │  • 10/batch     │         │  • Rotation: 12s   │   │
+│  │  • 10s interval │         │  • Real-time ticks │   │
+│  └────────┬────────┘         └─────────┬──────────┘   │
+│           │                            │              │
+│           └──────────┬─────────────────┘              │
+│                      ▼                                 │
+│            ┌──────────────────┐                        │
+│            │  TrendingPool    │                        │
+│            │  • Rankar        │                        │
+│            │  • Filtrerar     │                        │
+│            │  • Top 50        │                        │
+│            └─────────┬────────┘                        │
+│                      │                                 │
+│                      ▼                                 │
+│         [Top symboler till Agents & Dashboard]         │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Arbetsflöde:**
+1. **Init:** Laddar NASDAQ-100 universum från YAML
+2. **REST Loop:** Kontinuerlig batching av alla symboler för snapshot-data
+3. **WS Loop:** Dynamisk subscription på topp 50 symboler för tick-data
+4. **Rotation:** Automatisk omfördelning av WS-subscriptions baserat på trends
+5. **Data Push:** Kombinerad data till TrendingPool för agentanalys
+
+### 💡 Fördelar med Denna Arkitektur
+
+**Effektivitet:**
+- ✅ Respekterar API rate limits (60 calls/min REST, 50 subs WS)
+- ✅ Intelligent resursallokering (WS endast för aktiva symboler)
+- ✅ Hög täckning (99 symboler via REST, 50 top via WS)
+
+**Skalbarhet:**
+- ✅ Enkelt att ändra universum (redigera YAML)
+- ✅ Konfigurerbar batch-storlek och intervall
+- ✅ Flexibel rotation baserat på marknadsläge
+
+**Robusthet:**
+- ✅ Fallback om YAML-fil saknas
+- ✅ Automatisk reconnect vid WS-fel
+- ✅ Rate limiting skydd
+- ✅ Caching för prestanda
+
+---
+
 ## 🚀 Kom igång med Dashboarden
 
 ### 1. Installera beroenden
