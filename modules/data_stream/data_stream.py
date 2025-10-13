@@ -247,12 +247,56 @@ class DataStream:
             logger.info(f"Genererade simulerad marknadsdata för {len(target_symbols)} symboler")
             return mock_data
         else:
-            # Real API mode - not fully implemented yet
-            # This is a development message, not an error
-            logger.info("Real-time API fetching not yet implemented - consider using mock data mode")
-            logger.info("Set USE_MOCK_DATA=True in config.py or environment to use simulated market data")
-            # Return empty dict - calling code should handle gracefully
-            return {}
+            # Real API mode - fetch from Finnhub
+            logger.info(f"Fetching real market data from Finnhub API for {len(target_symbols)} symbols")
+            
+            try:
+                # Import FinnhubClient here to avoid circular imports
+                import sys
+                import os
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.dirname(os.path.dirname(current_dir))
+                dash_app_path = os.path.join(project_root, 'dash_app')
+                if dash_app_path not in sys.path:
+                    sys.path.insert(0, dash_app_path)
+                
+                from dash_app.utils.finnhub_client import FinnhubClient
+                
+                # Create Finnhub client
+                client = FinnhubClient(self.api_key)
+                
+                # Fetch quotes for all symbols
+                api_data = {}
+                for symbol in target_symbols:
+                    quote = client.get_quote(symbol)
+                    if quote and quote.get('c', 0) > 0:  # Valid quote
+                        api_data[symbol] = quote
+                        self.market_data_cache[symbol] = quote
+                        logger.debug(f"Fetched quote for {symbol}: ${quote.get('c', 0):.2f}")
+                    else:
+                        logger.warning(f"No valid quote data for {symbol}")
+                    
+                    # Small delay to avoid rate limiting
+                    import time
+                    time.sleep(0.1)
+                
+                if api_data:
+                    logger.info(f"Successfully fetched real market data for {len(api_data)} symbols")
+                else:
+                    logger.warning("No market data received from API - check API key and symbol validity")
+                
+                return api_data
+                
+            except ImportError as e:
+                logger.error(f"Failed to import FinnhubClient: {e}")
+                logger.info("Falling back to mock data mode")
+                # Fall back to mock data
+                self.use_mock_data = True
+                return self.fetch_market_data(symbols)
+            except Exception as e:
+                logger.error(f"Error fetching real market data: {e}")
+                logger.info("Consider using mock data mode or check API configuration")
+                return {}
     
     def analyze_trend(self, symbol: str) -> Dict[str, float]:
         """

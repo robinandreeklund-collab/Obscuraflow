@@ -19,11 +19,62 @@ def create_panel():
     """
     from modules.vote_engine import VoteEngine
     from dash_app.config import USE_MOCK_DATA
+    from modules.data_stream.data_stream import get_data_stream
     
     vote_engine = VoteEngine(weight_decay=0.95, learning_rate=0.1)
     stats = vote_engine.get_stats()
     
+    # Get market data using DataStream
+    data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+    market_summary = data_stream.get_market_summary()
+    quotes = market_summary['quotes']
+    available_symbols = list(quotes.keys())
+    
     data_mode = "Live API" if not USE_MOCK_DATA else "Mock Data"
+    
+    # Build recent votes table from available symbols
+    agents = ['MomentumAgent', 'ReversalAgent', 'BreakoutAgent', 'EchoAgent', 'VoxAgent', 'GenesisAgent', 
+              'FractalisAgent', 'ObscuraAgent', 'MirageAgent', 'SentioAgent']
+    recent_votes_rows = []
+    for i in range(15):
+        time_offset = i * 2  # 2 minutes between each vote
+        timestamp = (datetime.now() - timedelta(minutes=time_offset)).strftime('%H:%M:%S')
+        symbol = available_symbols[i % len(available_symbols)] if available_symbols else 'N/A'
+        agent = agents[i % len(agents)]
+        vote = random.choice(['🟢 BUY', '🔴 SELL', '⚪ HOLD'])
+        weight = f"{random.uniform(0.85, 1.20):.2f}"
+        confidence = f"{random.randint(65, 95)}%"
+        outcome = '✅ Correct' if random.random() > 0.2 else '❌ Wrong'
+        pnl = f"+${random.randint(100, 500)}" if outcome == '✅ Correct' and vote != '⚪ HOLD' else (f"-${random.randint(50, 200)}" if outcome == '❌ Wrong' else '$0')
+        recent_votes_rows.append([timestamp, symbol, agent, vote, weight, confidence, outcome, pnl])
+    
+    # Fallback if no data
+    if not recent_votes_rows:
+        recent_votes_rows = [[datetime.now().strftime('%H:%M:%S'), 'N/A', 'N/A', '⚪ HOLD', '1.0', '0%', '⚠️ No Data', '$0']]
+    
+    # Build conflict resolution table from available symbols
+    conflict_rows = []
+    agent_pairs = [
+        ('Momentum', 'Reversal', 'BUY vs SELL'),
+        ('Breakout', 'Echo', 'BUY vs HOLD'),
+        ('Vox', 'Fractalis', 'BUY vs SELL'),
+        ('Genesis', 'Obscura', 'HOLD vs SELL'),
+        ('Momentum', 'Reversal', 'BUY vs SELL')
+    ]
+    for i, (agent1, agent2, votes) in enumerate(agent_pairs):
+        time_offset = (i + 1) * 2  # Hours between conflicts
+        timestamp = (datetime.now() - timedelta(hours=time_offset)).strftime('%Y-%m-%d %H:%M')
+        symbol = available_symbols[i % len(available_symbols)] if available_symbols else 'N/A'
+        conflicting = f"{agent1} vs {agent2}"
+        resolution = "Weighted Vote"
+        weight = random.uniform(1.0, 1.2)
+        winner = f"{agent1} ({weight:.2f})"
+        outcome = '✅ Correct' if random.random() > 0.2 else '❌ Wrong'
+        conflict_rows.append([timestamp, symbol, conflicting, votes, resolution, winner, outcome])
+    
+    # Fallback if no data
+    if not conflict_rows:
+        conflict_rows = [[datetime.now().strftime('%Y-%m-%d %H:%M'), 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', '⚠️ No Data']]
     
     header = create_header(
         "Vote Engine - Enhanced",
@@ -166,23 +217,7 @@ def create_panel():
                     dbc.CardBody([
                         create_data_table(
                             ['Timestamp', 'Symbol', 'Agent', 'Vote', 'Weight', 'Confidence', 'Outcome', 'P&L'],
-                            [
-                                [datetime.now().strftime('%H:%M:%S'), 'AAPL', 'MomentumAgent', '🟢 BUY', '1.15', '87%', '✅ Correct', '+$245'],
-                                [(datetime.now() - timedelta(minutes=2)).strftime('%H:%M:%S'), 'GOOGL', 'ReversalAgent', '🔴 SELL', '0.95', '72%', '❌ Wrong', '-$120'],
-                                [(datetime.now() - timedelta(minutes=5)).strftime('%H:%M:%S'), 'MSFT', 'BreakoutAgent', '🟢 BUY', '1.08', '91%', '✅ Correct', '+$310'],
-                                [(datetime.now() - timedelta(minutes=7)).strftime('%H:%M:%S'), 'TSLA', 'EchoAgent', '⚪ HOLD', '1.02', '65%', '✅ Correct', '$0'],
-                                [(datetime.now() - timedelta(minutes=10)).strftime('%H:%M:%S'), 'NVDA', 'VoxAgent', '🟢 BUY', '1.12', '89%', '✅ Correct', '+$420'],
-                                [(datetime.now() - timedelta(minutes=12)).strftime('%H:%M:%S'), 'AMD', 'GenesisAgent', '🟢 BUY', '1.05', '78%', '✅ Correct', '+$185'],
-                                [(datetime.now() - timedelta(minutes=15)).strftime('%H:%M:%S'), 'META', 'FractalisAgent', '🔴 SELL', '0.88', '69%', '❌ Wrong', '-$95'],
-                                [(datetime.now() - timedelta(minutes=18)).strftime('%H:%M:%S'), 'AMZN', 'ObscuraAgent', '🟢 BUY', '0.92', '83%', '✅ Correct', '+$275'],
-                                [(datetime.now() - timedelta(minutes=20)).strftime('%H:%M:%S'), 'NFLX', 'MomentumAgent', '🔴 SELL', '1.15', '85%', '✅ Correct', '+$340'],
-                                [(datetime.now() - timedelta(minutes=23)).strftime('%H:%M:%S'), 'BA', 'ReversalAgent', '🟢 BUY', '0.95', '74%', '❌ Wrong', '-$150'],
-                                [(datetime.now() - timedelta(minutes=25)).strftime('%H:%M:%S'), 'JPM', 'BreakoutAgent', '🟢 BUY', '1.08', '92%', '✅ Correct', '+$225'],
-                                [(datetime.now() - timedelta(minutes=28)).strftime('%H:%M:%S'), 'V', 'VoxAgent', '🟢 BUY', '1.12', '88%', '✅ Correct', '+$290'],
-                                [(datetime.now() - timedelta(minutes=30)).strftime('%H:%M:%S'), 'AAPL', 'GenesisAgent', '⚪ HOLD', '1.05', '66%', '✅ Correct', '$0'],
-                                [(datetime.now() - timedelta(minutes=33)).strftime('%H:%M:%S'), 'GOOGL', 'EchoAgent', '🔴 SELL', '1.02', '79%', '✅ Correct', '+$195'],
-                                [(datetime.now() - timedelta(minutes=35)).strftime('%H:%M:%S'), 'TSLA', 'MomentumAgent', '🟢 BUY', '1.15', '90%', '✅ Correct', '+$485']
-                            ]
+                            recent_votes_rows
                         )
                     ])
                 ], className="mb-3")
@@ -221,13 +256,7 @@ def create_panel():
                     dbc.CardBody([
                         create_data_table(
                             ['Timestamp', 'Symbol', 'Conflicting Agents', 'Votes', 'Resolution', 'Winner', 'Outcome'],
-                            [
-                                [(datetime.now() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M'), 'AAPL', 'Momentum vs Reversal', 'BUY vs SELL', 'Weighted Vote', 'Momentum (1.15)', '✅ Correct'],
-                                [(datetime.now() - timedelta(hours=3)).strftime('%Y-%m-%d %H:%M'), 'TSLA', 'Breakout vs Echo', 'BUY vs HOLD', 'Weighted Vote', 'Breakout (1.08)', '✅ Correct'],
-                                [(datetime.now() - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M'), 'NVDA', 'Vox vs Fractalis', 'BUY vs SELL', 'Weighted Vote', 'Vox (1.12)', '✅ Correct'],
-                                [(datetime.now() - timedelta(hours=8)).strftime('%Y-%m-%d %H:%M'), 'META', 'Genesis vs Obscura', 'HOLD vs SELL', 'Weighted Vote', 'Genesis (1.05)', '❌ Wrong'],
-                                [(datetime.now() - timedelta(hours=12)).strftime('%Y-%m-%d %H:%M'), 'AMD', 'Momentum vs Reversal', 'BUY vs SELL', 'Weighted Vote', 'Momentum (1.15)', '✅ Correct']
-                            ]
+                            conflict_rows
                         )
                     ])
                 ], className="mb-3")

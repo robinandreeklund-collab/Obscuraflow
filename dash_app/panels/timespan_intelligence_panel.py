@@ -14,9 +14,26 @@ def create_panel():
     Skapar Timespan Intelligence panelen.
     """
     from modules.timespan_engine import TimespanEngine
+    from modules.data_stream.data_stream import get_data_stream
+    from dash_app.config import USE_MOCK_DATA
+    import random
     
     timespan = TimespanEngine()
     stats = timespan.get_stats()
+    
+    # Get market data using DataStream
+    data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+    market_summary = data_stream.get_market_summary()
+    quotes = market_summary['quotes']
+    
+    # Build convergence analysis data from available symbols
+    convergence_symbols = list(quotes.keys())[:5]  # Use first 5 available symbols
+    convergence_scores = [round(random.uniform(0.65, 0.95), 2) for _ in convergence_symbols]
+    
+    # Fallback if no data
+    if not convergence_symbols:
+        convergence_symbols = ['N/A']
+        convergence_scores = [0.0]
     
     header = create_header(
         "Timespan Intelligence",
@@ -80,8 +97,8 @@ def create_panel():
                     dbc.CardHeader("Convergence Analysis", style={'backgroundColor': '#151932', 'color': '#00d9ff'}),
                     dbc.CardBody([
                         create_bar_chart(
-                            ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'NVDA'],
-                            [0.85, 0.78, 0.92, 0.68, 0.88],
+                            convergence_symbols,
+                            convergence_scores,
                             "Timeframe Convergence Score",
                             "Symbol",
                             "Score",
