@@ -149,6 +149,15 @@ class RestBatcher:
                 # Hämta quote
                 quote = client.get_quote(symbol)
                 
+                # Check if we got a rate limit error from the API
+                if quote and quote.get('error') == 'rate_limit':
+                    logger.warning(f"API rate limit hit for {symbol}, backing off")
+                    self.stats['rate_limited_calls'] += 1
+                    self.stats['failed_calls'] += 1
+                    # Back off for a bit
+                    await asyncio.sleep(2.0)
+                    continue
+                
                 if quote and quote.get('c', 0) > 0:
                     batch_data[symbol] = quote
                     self.snapshot_cache[symbol] = {
@@ -163,7 +172,8 @@ class RestBatcher:
                     self.stats['failed_calls'] += 1
                 
                 # Liten paus mellan symboler för att sprida ut anropen
-                await asyncio.sleep(0.15)  # 150ms mellan varje symbol
+                # 1 second per call to stay within 60 calls/minute limit
+                await asyncio.sleep(1.0)
             
             self.stats['last_batch_time'] = datetime.now()
             logger.info(f"Hämtade batch: {len(batch_data)}/{len(batch)} symboler lyckades")

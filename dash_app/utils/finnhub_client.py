@@ -41,6 +41,7 @@ class FinnhubClient:
             
         Returns:
             Dict with quote data or None if error
+            Returns {'error': 'rate_limit', 'status_code': 429} if rate limited
         """
         cache_key = f"quote_{symbol}"
         
@@ -60,6 +61,9 @@ class FinnhubClient:
                 self._cache[cache_key] = data
                 self._cache_time[cache_key] = time.time()
                 return data
+            elif response.status_code == 429:
+                logger.warning(f"Rate limit exceeded for {symbol}")
+                return {'error': 'rate_limit', 'status_code': 429}
             else:
                 logger.error(f"Error fetching quote for {symbol}: {response.status_code}")
                 return None
