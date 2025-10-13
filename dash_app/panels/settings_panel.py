@@ -39,13 +39,31 @@ def create_module_control_section():
         ("TimespanEngine", "fas fa-clock")
     ]
     
+    # Explicit mapping from module name to import path
+    module_import_paths = {
+        "DataStream": "modules.data_stream",
+        "TrendingPool": "modules.trending_pool",
+        "Fusion": "modules.fusion",
+        "VoteEngine": "modules.vote_engine",
+        "Sizing": "modules.sizing",
+        "PortfolioEngine": "modules.portfolio_engine",
+        "SelfCritique": "modules.self_critique",
+        "MutationTracker": "modules.mutation_tracker",
+        "DecisionCore": "modules.decision_core",
+        "TimespanEngine": "modules.timespan_engine"
+    }
+    
     for module_name, icon in module_list:
         # Check if module is available and get status from manager
         status = "inactive"
         try:
-            __import__(f'modules.{module_name.lower().replace("engine", "_engine")}')
-            status = "active" if manager.get_module_status(module_name) else "inactive"
-        except:
+            import_path = module_import_paths.get(module_name)
+            if import_path:
+                __import__(import_path)
+                status = "active" if manager.get_module_status(module_name) else "inactive"
+            else:
+                status = "inactive"
+        except Exception:
             status = "inactive"
         
         modules.append({"name": module_name, "status": status, "icon": icon})
