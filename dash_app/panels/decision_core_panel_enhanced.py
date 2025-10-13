@@ -47,8 +47,8 @@ def create_panel():
         "fas fa-brain"
     )
     
-    # Create price change chart
-    symbols = list(quotes.keys())[:8]
+    # Create price change chart - visa alla aktiva aktier
+    symbols = list(quotes.keys())[:50]  # Visa upp till 50 symboler
     price_changes = [quotes[s].get('dp', 0) for s in symbols]
     
     price_chart = go.Figure()
@@ -61,12 +61,13 @@ def create_panel():
         textposition='outside'
     ))
     price_chart.update_layout(
-        title="Market Price Changes (%)",
+        title="Market Price Changes (%) - All Active Stocks",
         plot_bgcolor='#1a1f3a',
         paper_bgcolor='#151932',
         font=dict(color='#e5e7eb'),
         showlegend=False,
-        height=300
+        height=400,  # Increased height for more symbols
+        xaxis=dict(tickangle=-45)  # Angle labels for readability
     )
     
     # Create volume chart
@@ -86,12 +87,13 @@ def create_panel():
         textposition='outside'
     ))
     volume_chart.update_layout(
-        title="Trading Volume",
+        title="Trading Volume - All Active Stocks",
         plot_bgcolor='#1a1f3a',
         paper_bgcolor='#151932',
         font=dict(color='#e5e7eb'),
         showlegend=False,
-        height=300
+        height=400,  # Increased height for more symbols
+        xaxis=dict(tickangle=-45)  # Angle labels for readability
     )
     
     # Create detailed market table

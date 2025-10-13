@@ -142,11 +142,15 @@ class DecisionCore:
             # Hämta agent registry
             self.agent_registry = get_registry()
             
-            # Skapa agentinstanser för analys
+            # Skapa agentinstanser för analys - aktivera alla tillgängliga agenter
             self._active_agents = {}
             agent_types = [
-                'momentum_agent', 'reversal_agent', 'breakout_agent',
-                'echo_agent', 'vox_agent', 'fractalis_agent'
+                # Klassiska agenter
+                'momentum_agent', 'reversal_agent', 'breakout_agent', 'hybrid_agent',
+                # Paradigmatiska agenter
+                'echo_agent', 'fractalis_agent', 'vox_agent', 'myco_agent', 
+                'obscura_agent', 'mirage_agent', 'sentio_agent', 'reflexion_agent',
+                'dimensio_agent', 'symbio_agent', 'genesis_agent', 'architectum_agent'
             ]
             
             for agent_type in agent_types:
@@ -187,8 +191,8 @@ class DecisionCore:
             market_summary = self.data_stream.get_market_summary()
             quotes = market_summary.get('quotes', {})
             
-            # Välj ett subset av symboler att analysera (topp 8)
-            symbols = list(quotes.keys())[:8]
+            # Analysera alla tillgängliga symboler (upp till 50 subscriptions)
+            symbols = list(quotes.keys())[:50]
             
             decisions_made = 0
             for symbol in symbols:
