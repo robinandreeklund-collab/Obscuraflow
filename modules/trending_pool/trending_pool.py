@@ -76,16 +76,31 @@ class TrendingPool:
             self.symbol_scores[symbol] = 0.0
             self.symbol_metadata[symbol] = {
                 'first_seen': datetime.now().isoformat(),
-                'update_count': 0
+                'update_count': 0,
+                'batch_updates': 0,
+                'tick_updates': 0,
+                'last_batch_update': None,
+                'last_tick_update': None
             }
         
         # Lägg till ny datapoint
-        self.symbol_history[symbol].append(trend_data.copy())
-        self.symbol_metadata[symbol]['update_count'] += 1
-        self.symbol_metadata[symbol]['last_update'] = datetime.now().isoformat()
+        trend_data_copy = trend_data.copy()
+        trend_data_copy['timestamp'] = datetime.now()
+        trend_data_copy['source'] = 'batch'  # Markera som batch-data
+        self.symbol_history[symbol].append(trend_data_copy)
         
-        # Beräkna nytt score med dämpning
-        raw_score = trend_data.get('score', 0.0)
+        self.symbol_metadata[symbol]['update_count'] += 1
+        self.symbol_metadata[symbol]['batch_updates'] += 1
+        self.symbol_metadata[symbol]['last_update'] = datetime.now().isoformat()
+        self.symbol_metadata[symbol]['last_batch_update'] = datetime.now().isoformat()
+        
+        # Beräkna score från trend_data om inte redan satt
+        if 'score' not in trend_data or trend_data['score'] == 0:
+            raw_score = self._calculate_trend_score(trend_data)
+        else:
+            raw_score = trend_data['score']
+        
+        # Hämta gammalt score
         old_score = self.symbol_scores[symbol]
         
         # Exponentiell utjämning för att dämpa fluktuationer
@@ -97,11 +112,86 @@ class TrendingPool:
         self.symbol_scores[symbol] = dampened_score
         
         logger.debug(
-            f"Symbol {symbol} uppdaterad: "
-            f"raw={raw_score:.2f}, dampened={dampened_score:.2f}"
+            f"Symbol {symbol} uppdaterad (batch): "
+            f"score={dampened_score:.2f} (raw={raw_score:.2f})"
         )
         
         return dampened_score
+    
+    def update_symbol_tick(self, symbol: str, tick_data: Dict[str, float]) -> float:
+        """
+        Uppdaterar symbol med tick-data från WebSocket.
+        Används för högfrekventa uppdateringar med lägre vikt.
+        
+        Args:
+            symbol: Tickersymbol
+            tick_data: Dict med 'volume', 'momentum', 'volatility'
+        
+        Returns:
+            Uppdaterat score för symbolen
+        """
+        # Initiera historik om symbolen är ny
+        if symbol not in self.symbol_history:
+            self.symbol_history[symbol] = deque(maxlen=self.max_history)
+            self.symbol_scores[symbol] = 0.0
+            self.symbol_metadata[symbol] = {
+                'first_seen': datetime.now().isoformat(),
+                'update_count': 0,
+                'batch_updates': 0,
+                'tick_updates': 0,
+                'last_batch_update': None,
+                'last_tick_update': None
+            }
+        
+        # Lägg till tick-data med lägre vikt
+        tick_data_copy = tick_data.copy()
+        tick_data_copy['timestamp'] = datetime.now()
+        tick_data_copy['source'] = 'tick'  # Markera som tick-data
+        self.symbol_history[symbol].append(tick_data_copy)
+        
+        self.symbol_metadata[symbol]['update_count'] += 1
+        self.symbol_metadata[symbol]['tick_updates'] += 1
+        self.symbol_metadata[symbol]['last_update'] = datetime.now().isoformat()
+        self.symbol_metadata[symbol]['last_tick_update'] = datetime.now().isoformat()
+        
+        # Beräkna score från tick_data med lägre vikt (30% av normal vikt)
+        tick_score = self._calculate_trend_score(tick_data) * 0.3
+        old_score = self.symbol_scores[symbol]
+        
+        # Mycket lätt utjämning för ticks (10% weight på nytt värde)
+        dampened_score = 0.1 * tick_score + 0.9 * old_score
+        
+        self.symbol_scores[symbol] = dampened_score
+        
+        logger.debug(
+            f"Symbol {symbol} uppdaterad (tick): "
+            f"score={dampened_score:.2f} (tick={tick_score:.2f})"
+        )
+        
+        return dampened_score
+    
+    def _calculate_trend_score(self, data: Dict[str, float]) -> float:
+        """
+        Beräknar trend score från metriker.
+        
+        Args:
+            data: Dict med 'volume', 'momentum', 'volatility'
+        
+        Returns:
+            Beräknat trend score
+        """
+        volume = data.get('volume', 0)
+        momentum = abs(data.get('momentum', 0))  # Absolut momentum
+        volatility = data.get('volatility', 0)
+        
+        # Viktad summa
+        score = (
+            self.weights['volume'] * min(volume, 100) +  # Cap volym vid 100
+            self.weights['momentum'] * min(momentum, 10) +  # Cap momentum vid 10%
+            self.weights['volatility'] * min(volatility, 10)  # Cap volatilitet vid 10%
+        )
+        
+        return score
     
     def get_ranked_symbols(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """
@@ -197,6 +287,32 @@ class TrendingPool:
             return True
         return False
     
+    def get_top_symbols(self, count: int = 50) -> List[str]:
+        """
+        Hämtar top N symboler baserat på score.
+        
+        Args:
+            count: Antal top-symboler att returnera
+        
+        Returns:
+            Lista med symboler sorterade efter score (högst först)
+        """
+        if not self.symbol_scores:
+            return []
+        
+        # Sortera efter score (högst först)
+        ranked = sorted(
+            self.symbol_scores.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+        
+        # Returnera top N symboler
+        top_symbols = [symbol for symbol, score in ranked[:count]]
+        
+        logger.debug(f"Returnerar top {count} symboler: {top_symbols[:10]}...")
+        return top_symbols
+    
     def get_pool_stats(self) -> Dict[str, Any]:
         """
         Hämtar statistik om hela poolen.
@@ -225,3 +341,12 @@ class TrendingPool:
             'top_symbol': {'symbol': ranked[0][0], 'score': round(ranked[0][1], 2)},
             'bottom_symbol': {'symbol': ranked[-1][0], 'score': round(ranked[-1][1], 2)}
         }
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Alias för get_pool_stats() för kompatibilitet.
+        
+        Returns:
+            Dict med poolstatistik
+        """
+        return self.get_pool_stats()

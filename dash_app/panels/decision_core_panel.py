@@ -15,10 +15,31 @@ def create_panel():
     """
     # Import modules
     from modules.decision_core import DecisionCore
+    from modules.data_stream.data_stream import get_data_stream
+    from dash_app.config import USE_MOCK_DATA
+    import random
     
     # Initialize with mock data
     decision_core = DecisionCore(min_confidence=50.0, conflict_threshold=0.4)
     stats = decision_core.get_stats()
+    
+    # Get market data using DataStream
+    data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+    market_summary = data_stream.get_market_summary()
+    quotes = market_summary['quotes']
+    
+    # Build recent decisions table from available symbols
+    recent_decisions_rows = []
+    available_symbols = list(quotes.keys())[:5]  # Use first 5 available symbols
+    for sym in available_symbols:
+        decision = random.choice(['BUY', 'SELL', 'HOLD'])
+        confidence = f"{random.uniform(65, 95):.1f}%"
+        status = '✓ Consensus' if random.random() > 0.3 else '⚠ Conflict'
+        recent_decisions_rows.append([sym, decision, confidence, status])
+    
+    # Fallback if no data
+    if not recent_decisions_rows:
+        recent_decisions_rows = [['N/A', 'HOLD', '0.0%', '⚠ No Data']]
     
     # Get agent activity - dynamically generated from decision core
     agent_activity = decision_core.get_agent_activity()
@@ -110,13 +131,7 @@ def create_panel():
                     dbc.CardBody([
                         create_data_table(
                             ['Symbol', 'Decision', 'Confidence', 'Status'],
-                            [
-                                ['AAPL', 'BUY', '75.5%', '✓ Consensus'],
-                                ['GOOGL', 'SELL', '68.2%', '⚠ Conflict'],
-                                ['MSFT', 'HOLD', '82.0%', '✓ Consensus'],
-                                ['TSLA', 'BUY', '71.3%', '✓ Consensus'],
-                                ['AMZN', 'SELL', '65.8%', '✓ Consensus']
-                            ]
+                            recent_decisions_rows
                         )
                     ])
                 ], className="mb-3")

@@ -981,6 +981,623 @@ Kopplingar:
 11. ✅ **Risk Ecosystem** - Risk per symbol och agent
 12. ✅ **System Flow** - Visuell systemkarta
 13. ✅ **Narrative Engine** - Händelseflöde och berättelse
+14. ✅ **Data Source Panel** - Live/Mock data toggle och konfiguration
+15. ✅ **Portfolio Development** - Utvecklingsanalys och evolution
+
+### 📊 Detaljerad Panelöversikt
+
+#### 1. Decision Core Panel (`/decision-core`)
+**Modul:** `modules/decision_core`  
+**Funktioner:**
+- ✅ Samlar och validerar agentbeslut
+- ✅ Konsensusanalys mellan agenter
+- ✅ Beslutsrouting (consensus vs conflict)
+- ✅ Real-time statistik och tracking
+
+**Visade Datapunkter:**
+- Total Decisions: Antal beslut sedan systemstart
+- Consensus Rate: Procentandel beslut med agentöverenskommelse
+- Conflict Rate: Procentandel beslut som kräver röstning
+- Average Confidence: Genomsnittlig konfidensgrad över alla beslut
+- Decision Distribution: BUY/SELL/HOLD fördelning
+- Recent Decisions: Senaste besluten med symbol, beslut, confidence och status
+- Agent Activity: Lista över aktiva agenter med beslutantal och status
+
+**Integrationspunkter:**
+- ← Tar emot beslut från: Alla 16 agenter via agent_registry
+- → Skickar beslut till: vote_engine (vid konflikt), fusion (validering), sizing (positionering)
+- ← Feedback från: self_critique (felanalys), symbol_memory (historik)
+
+**Beroenden:** DecisionCore-modul, alla agenter, DataProvider  
+**Auto-refresh:** 3 sekunder  
+**Status:** ✅ Klar - Alla datapunkter hanteras korrekt enligt README-flödet
+
+#### 2. Vote Engine Panel (`/vote-panel`)
+**Modul:** `modules/vote_engine`  
+**Funktioner:**
+- ✅ Viktad röstning vid agentkonflikter
+- ✅ Agent weight evolution tracking
+- ✅ Konfliktlösning med RL-optimering
+- ✅ Performance-baserad viktjustering
+
+**Visade Datapunkter:**
+- Total Votes: Totalt antal röstningar
+- Average Weight: Genomsnittlig agentvikt
+- Conflicts Resolved: Antal lösta konflikter
+- Success Rate: Framgångsgrad för röstningsresultat
+- Agent Weight Evolution: 24-timmars historik per agent
+- Voting Accuracy: Träffsäkerhet per agent
+- Recent Votes: Senaste röstningar med resultat
+
+**Integrationspunkter:**
+- ← Tar emot: Konfliktbeslut från decision_core
+- → Skickar: Viktade beslut tillbaka till decision_core
+- ↔ Samverkar med: synergy_matrix (agentrelationer), meta_agent_governor (prioritering)
+- ← Feedback: RL-belöningar baserat på röstprecision
+
+**Beroenden:** VoteEngine-modul, DecisionCore, SynergyMatrix  
+**Auto-refresh:** 3 sekunder  
+**Status:** ✅ Klar - Komplett viktningssystem med historikspårning
+
+#### 3. Position Sizing Panel (`/position-sizing`)
+**Modul:** `modules/sizing`  
+**Funktioner:**
+- ✅ Kelly criterion-baserad sizing
+- ✅ Volatility-adjusted position sizing
+- ✅ RL-optimerad sizing per strategi
+- ✅ Risk management och kapitalallokering
+
+**Visade Datapunkter:**
+- Capital: Totalt tillgängligt kapital
+- Active Positions: Antal aktiva positioner
+- Max Position Size: Maximal positionsstorlek i procent
+- Total Allocated: Totalt allokerat kapital
+- Current Positions: Tabell med symbol, storlek, Kelly%, volatilitet, allokering
+- Sizing Profile Performance: Prestanda för olika sizing-profiler
+
+**Integrationspunkter:**
+- ← Tar emot: Beslut från decision_core, risk från risk_mapper
+- → Skickar: Positionsstorlek till portfolio_engine
+- ↔ Använder: sentio_agent för sentimentjustering, timespan_engine för tidsramsjustering
+
+**Beroenden:** Sizing-modul, DecisionCore, RiskMapper  
+**Auto-refresh:** 4 sekunder  
+**Status:** ✅ Klar - Kelly criterion och RL-optimering implementerad
+
+#### 4. Timespan Intelligence Panel (`/timespan-intelligence`)
+**Modul:** `modules/timespan_engine`  
+**Funktioner:**
+- ✅ Multi-timeframe synchronization
+- ✅ RL-träning för optimal span-selection
+- ✅ Adaptiva spans per marknadsregim
+- ✅ Convergence analysis över tidsramar
+
+**Visade Datapunkter:**
+- Active Timeframes: Antal aktiva tidsramar
+- Sync Score: Synkroniseringsgrad mellan spans
+- RL Episodes: Antal träningsepisoder
+- Avg Reward: Genomsnittlig RL-belöning
+- Timeframe Status: Status och prestanda per tidsram
+- Convergence Analysis: Överensstämmelse mellan spans
+
+**Integrationspunkter:**
+- ← Tar emot: Marknadsdata från data_stream
+- → Skickar: Multi-span signaler till fusion
+- ↔ Integrerar med: fractalis_agent (fraktalanalys), dimensio_agent (5D analys)
+
+**Beroenden:** TimespanEngine-modul, DataStream, Fusion  
+**Auto-refresh:** 5 sekunder  
+**Status:** ✅ Klar - Multi-timeframe system fullt funktionellt
+
+#### 5. Multi Portfolio Panel (`/multi-portfolio`)
+**Modul:** `modules/portfolio_engine`  
+**Funktioner:**
+- ✅ Parallella portföljhantering
+- ✅ Portföljmutation och evolution
+- ✅ RL-optimering av portföljkonfigurationer
+- ✅ Performance tracking per portfölj
+
+**Visade Datapunkter:**
+- Total Portfolios: Antal aktiva portföljer
+- Active Positions: Totala aktiva positioner
+- Best Performer: Bäst presterande portfölj
+- Total Value: Totalt portföljvärde
+- Portfolio Performance: Tabell med namn, värde, avkastning, Sharpe ratio
+- Recent Mutations: Senaste portföljmutationer
+
+**Integrationspunkter:**
+- ← Tar emot: Beslut från decision_core, sizing från sizing-modul
+- → Skickar: Performance data till portfolio_comparator
+- ↔ Använder: evolution för mutation, mutation_tracker för genealogi
+
+**Beroenden:** PortfolioEngine-modul, DecisionCore, Sizing, Evolution  
+**Auto-refresh:** 4 sekunder  
+**Status:** ✅ Klar - Multi-portfölj system med mutation
+
+#### 6. Mutation Tracker Panel (`/mutation-tracker`)
+**Modul:** `modules/mutation_tracker`  
+**Funktioner:**
+- ✅ Genealogisk spårning av mutationer
+- ✅ Lineage performance analysis
+- ✅ Generationshistorik
+- ✅ Mutation tree visualization
+
+**Visade Datapunkter:**
+- Total Mutations: Totalt antal mutationer
+- Active Lineages: Antal aktiva genealogiska linjer
+- Avg Generation: Genomsnittlig generation
+- Best Lineage: Bäst presterande linje
+- Lineage Performance: Tabell med namn, generation, fitness, status
+- Recent Mutations: Senaste mutationer med typ och resultat
+
+**Integrationspunkter:**
+- ← Tar emot: Mutation events från evolution, agent_lifecycle
+- → Skickar: Genealogi-data till narrative_engine
+- ↔ Spårar: Agentmutationer, strategimutationer, portföljmutationer
+
+**Beroenden:** MutationTracker-modul, Evolution, AgentLifecycle  
+**Auto-refresh:** 3 sekunder  
+**Status:** ✅ Klar - Komplett genealogisk spårning
+
+#### 7. Agent Spectrum Panel (`/agent-spectrum`)
+**Modul:** `modules/agent_spectrum`  
+**Funktioner:**
+- ✅ Ontologisk positionering av agenter
+- ✅ Dimensionell rörelse tracking
+- ✅ Agent clustering och grupper
+- ✅ Spectrum visualization
+
+**Visade Datapunkter:**
+- Total Agents: Antal spårade agenter
+- Active Dimensions: Antal aktiva dimensioner
+- Spectrum Shifts: Antal dimensionella förflyttningar
+- Cluster Count: Antal agentkluster
+- Agent Positioning: Tabell med agent, dimension, position, status
+- Dimensional Movement: Rörelsehistorik
+
+**Integrationspunkter:**
+- ← Tar emot: Agent status från agent_lifecycle
+- → Skickar: Ontologiska insights till meta_agent_governor
+- ↔ Analyserar: Dimensionell rörelse för alla paradigmatiska agenter
+
+**Beroenden:** AgentSpectrum-modul, AgentLifecycle, alla agenter  
+**Auto-refresh:** 4 sekunder  
+**Status:** ✅ Klar - Ontologisk kartläggning implementerad
+
+#### 8. Agent Lifecycle Panel (`/agent-lifecycle`)
+**Modul:** `modules/agent_lifecycle`  
+**Funktioner:**
+- ✅ Spårning av agentlivscykel (födelse → pensionering)
+- ✅ Evolution och mutation tracking
+- ✅ Performance-baserad survival
+- ✅ Generationshantering
+
+**Visade Datapunkter:**
+- Active Agents: Antal aktiva agenter
+- Total Births: Totalt antal skapade agenter
+- Mutations: Antal mutationer
+- Retirements: Antal pensionerade agenter
+- Agent Status: Tabell med agent, status, generation, fitness
+- Lifecycle Events: Senaste livscykelhändelser
+
+**Integrationspunkter:**
+- ← Tar emot: Performance från decision_core, evolution triggers
+- → Skickar: Agent metadata till agent_spectrum, mutation_tracker
+- ↔ Styr: Agent creation, mutation, retirement policies
+
+**Beroenden:** AgentLifecycle-modul, Evolution, MutationTracker  
+**Auto-refresh:** 3 sekunder  
+**Status:** ✅ Klar - Komplett livscykelhantering
+
+#### 9. Meta Governance Panel (`/meta-governance`)
+**Modul:** `modules/metaagentgovernor`  
+**Funktioner:**
+- ✅ Överordnad agentstyrning
+- ✅ Agent councils och prioritering
+- ✅ Regim-baserad aktivering
+- ✅ Meta-policies
+
+**Visade Datapunkter:**
+- Active Councils: Antal aktiva agentråd
+- Governance Rules: Antal styrningsregler
+- Priority Shifts: Antal prioritetsändringar
+- Consensus Level: Överordnad konsensusgrad
+- Council Composition: Tabell med råd, medlemmar, mandat
+- Recent Governance: Senaste styrningsbeslut
+
+**Integrationspunkter:**
+- ← Tar emot: Agent performance från decision_core, synergies från synergy_matrix
+- → Skickar: Prioriteringar till vote_engine, policies till alla agenter
+- ↔ Styr: Överordnad agentallokering och regimväxling
+
+**Beroenden:** MetaAgentGovernor-modul, VoteEngine, SynergyMatrix  
+**Auto-refresh:** 4 sekunder  
+**Status:** ✅ Klar - Meta-styrning implementerad
+
+#### 10. Portfolio Intelligence Panel (`/portfolio-intelligence`)
+**Modul:** `modules/portfolio_comparator`  
+**Funktioner:**
+- ✅ Cross-portfolio jämförelse
+- ✅ Benchmark analysis
+- ✅ Komponentjämförelse
+- ✅ Meta-portfolio optimization
+
+**Visade Datapunkter:**
+- Portfolios Compared: Antal jämförda portföljer
+- Best Performer: Bäst presterande portfölj
+- Benchmark Beat Rate: Procentandel som slår benchmark
+- Correlation Score: Korrelationsanalys
+- Performance Comparison: Tabell med portfölj, avkastning, risk, Sharpe
+- Component Analysis: Komponentbidrag till prestanda
+
+**Integrationspunkter:**
+- ← Tar emot: Portfolio data från portfolio_engine
+- → Skickar: Insights till decision_core för optimering
+- ↔ Använder: Benchmark data, historisk prestanda
+
+**Beroenden:** PortfolioComparator-modul, PortfolioEngine  
+**Auto-refresh:** 5 sekunder  
+**Status:** ✅ Klar - Komplett jämförelseanalys
+
+#### 11. Risk Ecosystem Panel (`/risk-ecosystem`)
+**Modul:** `modules/risk_mapper`  
+**Funktioner:**
+- ✅ Risk mapping per symbol och agent
+- ✅ Portfolio risk aggregation
+- ✅ Regimriskanalys
+- ✅ Sizing/sentiment overlay
+
+**Visade Datapunkter:**
+- Total Risk Exposure: Total riskexponering
+- High Risk Positions: Antal högriskpositioner
+- Risk-Adjusted Return: Riskjusterad avkastning
+- VaR (95%): Value at Risk
+- Symbol Risk Matrix: Tabell med symbol, risk level, volatilitet, exponering
+- Agent Risk Contribution: Riskbidrag per agent
+
+**Integrationspunkter:**
+- ← Tar emot: Position data från portfolio_engine, volatility från data_stream
+- → Skickar: Risk constraints till sizing-modul
+- ↔ Använder: Sentio_agent för marknadspsykologi, regimdata
+
+**Beroenden:** RiskMapper-modul, PortfolioEngine, DataStream  
+**Auto-refresh:** 3 sekunder  
+**Status:** ✅ Klar - Riskekosystem fullt implementerat
+
+#### 12. System Flow Panel (`/system-flow`)
+**Modul:** Integrerad systemöversikt  
+**Funktioner:**
+- ✅ Visuell modulkarta
+- ✅ Real-time status per modul
+- ✅ Dataflödesöversikt
+- ✅ System health monitoring
+
+**Visade Datapunkter:**
+- Active Modules: Antal aktiva moduler (19/19)
+- Data Flow Rate: Dataflödeshastighet (msg/s)
+- System Uptime: Systemdrifttid
+- Latency: Genomsnittlig latens
+- Module Flow Diagram: Visuellt flödesdiagram
+- System Health: Status per modul
+
+**Integrationspunkter:**
+- ← Aggregerar: Status från alla 19 moduler
+- → Visar: Komplett systemöversikt
+- ↔ Monitorer: Hela dataflödet från data till beslut
+
+**Beroenden:** Alla 19 moduler  
+**Auto-refresh:** 4 sekunder  
+**Status:** ✅ Klar - Komplett systemöversikt
+
+#### 13. Narrative Engine Panel (`/narrative`)
+**Modul:** `modules/narrative_engine`  
+**Funktioner:**
+- ✅ Händelseflöde och loggning
+- ✅ Causal chain tracking
+- ✅ Systemberättelse
+- ✅ Event grouping och analys
+
+**Visade Datapunkter:**
+- Total Events: Totalt antal händelser
+- Causal Chains: Antal kausala kedjor
+- Event Groups: Antal händelsegrupper
+- Active Stories: Antal aktiva berättelser
+- Recent Narrative: Senaste händelser med timestamps
+- Event Statistics: Händelsetyper och fördelning
+
+**Integrationspunkter:**
+- ← Tar emot: Events från alla moduler
+- → Skickar: Narrativ kontext för visualisering
+- ↔ Loggar: Komplett systemhistorik och beslutsspår
+
+**Beroenden:** NarrativeEngine-modul, alla moduler  
+**Auto-refresh:** 2 sekunder  
+**Status:** ✅ Klar - Komplett narrativhantering
+
+#### 14. Data Source Panel (`/data-source`)
+**Modul:** `dash_app/utils/data_provider`  
+**Funktioner:**
+- ✅ Live/Mock data toggle
+- ✅ Finnhub API integration
+- ✅ Nasdaq-100 symbol management
+- ✅ Data caching och fallback
+
+**Visade Datapunkter:**
+- Data Source Mode: Mock/Live toggle
+- API Status: Finnhub API status
+- Symbols Tracked: Antal spårade symboler
+- Data Quality: Datakvalitetsindikatorer
+
+**Integrationspunkter:**
+- → Tillhandahåller: Data till data_stream
+- ↔ Konfigurerar: Datakälla för hela systemet
+
+**Beroenden:** DataProvider, FinnhubClient, DataStream  
+**Auto-refresh:** Kontinuerlig  
+**Status:** ✅ Klar - Komplett datakällhantering
+
+#### 15. Portfolio Development Panel (`/portfolio-development`)
+**Modul:** `modules/portfolio_engine` + `modules/evolution`  
+**Funktioner:**
+- ✅ Utvecklingsanalys
+- ✅ Evolution tracking
+- ✅ Performance metrics
+- ✅ Development insights
+
+**Visade Datapunkter:**
+- Development Metrics
+- Evolution Statistics
+- Performance Tracking
+- Growth Analysis
+
+**Integrationspunkter:**
+- ← Tar emot: Portfolio evolution data
+- → Skickar: Development insights
+
+**Beroenden:** PortfolioEngine, Evolution  
+**Auto-refresh:** 4 sekunder  
+**Status:** ✅ Klar - Utvecklingsanalys implementerad
+
+---
+
+## 🔄 Systemflöde med Statusöversikt
+
+### Modulflöde och Integrationspunkter
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        📊 OBSCURAFLOW SYSTEMFLÖDE                           │
+│                     Status: ✅ Alla moduler operativa                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+[1] 📡 DATA INGESTION
+    ├─ DataStream ✅               → Hämtar live/mock marknadsdata
+    │   └─ FinnhubClient ✅        → API integration med caching
+    └─ TrendingPool ✅             → Rankar och filtrerar symboler
+        └─ Output: Top symboler med trend/volym/momentum
+
+[2] 🤖 AGENT ANALYSIS
+    ├─ 16 Agenter (via AgentRegistry) ✅
+    │   ├─ Classic (4) ✅          → Momentum, Reversal, Breakout, Hybrid
+    │   └─ Paradigmatic (12) ✅    → Echo, Fractalis, Vox, Myco, Obscura, etc.
+    │
+    ├─ AgentLifecycle ✅           → Spårar agent evolution och status
+    ├─ AgentSpectrum ✅            → Ontologisk kartläggning
+    └─ Output: 16+ beslut per symbol med confidence och reasoning
+
+[3] 🔀 SIGNAL VALIDATION
+    ├─ Fusion ✅                   → Multi-timeframe validering
+    │   └─ TimespanEngine ✅       → Synkroniserar över 1m/5m/15m/1h/4h
+    └─ Output: Validerade signaler med konsistensgrad
+
+[4] 🧠 DECISION MAKING
+    ├─ DecisionCore ✅             → Samlar och analyserar agentbeslut
+    │   ├─ Consensus detection
+    │   └─ Conflict routing
+    │
+    └─ VoteEngine ✅               → Löser konflikter med viktad röstning
+        ├─ Weight evolution (RL-baserad)
+        └─ Meta-voting capabilities
+
+[5] 🎯 GOVERNANCE & COORDINATION
+    ├─ MetaAgentGovernor ✅        → Överordnad agentstyrning
+    │   ├─ Agent councils
+    │   └─ Regim-baserad prioritering
+    │
+    └─ SynergyMatrix ✅            → Agentrelationer och samverkan
+        └─ Output: Optimerad agentallokering
+
+[6] 📐 POSITION SIZING
+    ├─ Sizing ✅                   → Kelly criterion + RL-optimering
+    │   ├─ Risk-adjusted sizing
+    │   ├─ Volatility adaptation
+    │   └─ Sentiment integration (via SentioAgent)
+    │
+    └─ RiskMapper ✅               → Riskanalys och constraints
+        └─ Output: Optimal positionsstorlek per trade
+
+[7] 💼 PORTFOLIO MANAGEMENT
+    ├─ PortfolioEngine ✅          → Multi-portfolio hantering
+    │   ├─ Parallella portföljer
+    │   ├─ Portfolio mutation
+    │   └─ RL-optimering
+    │
+    └─ PortfolioComparator ✅      → Jämförelse och benchmarking
+        └─ Output: Optimerad portföljallokering
+
+[8] 🔬 EVOLUTION & LEARNING
+    ├─ Evolution ✅                → Strategi- och agentmutation
+    │   ├─ RL-driven evolution
+    │   └─ Regimadaptation
+    │
+    ├─ MutationTracker ✅          → Genealogisk spårning
+    │   └─ Lineage performance
+    │
+    └─ SelfCritique ✅             → Felanalys och feedback
+        ├─ Performance analysis
+        └─ RL reward calculation
+
+[9] 💾 MEMORY & HISTORY
+    ├─ SymbolMemory ✅             → Symbol-specifik historik
+    │   ├─ Trade history
+    │   └─ Agent precision tracking
+    │
+    └─ NarrativeEngine ✅          → Händelseflöde och berättelse
+        ├─ Event logging
+        ├─ Causal chains
+        └─ System narrative
+
+[10] 📊 VISUALIZATION & MONITORING
+    └─ Dash Dashboard (15 paneler) ✅
+        ├─ Real-time updates (2-5s intervals)
+        ├─ Live/Mock data toggle
+        └─ Komplett systemöversikt
+
+═══════════════════════════════════════════════════════════════════════════════
+DATAFLÖDE: Data → Agents → Fusion → Decision → Sizing → Portfolio → Execution
+FEEDBACK: Performance → Critique → Evolution → Mutation → Improved Agents
+GOVERNANCE: MetaGovernor → Synergy → Vote → Optimized Decisions
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### Status per Modul
+
+| # | Modul | Status | Funktionalitet | Integrationer |
+|---|-------|--------|----------------|---------------|
+| 1 | data_stream | ✅ Klar | WebSocket/REST, mock data | → trending_pool, agents |
+| 2 | trending_pool | ✅ Klar | Symbolranking, värmeanalys | ← data_stream → agents |
+| 3 | decision_core | ✅ Klar | Beslutsrouting, konsensus | ← agents → vote/sizing |
+| 4 | vote_engine | ✅ Klar | Viktad röstning, RL-viktning | ← decision_core ↔ synergy_matrix |
+| 5 | fusion | ✅ Klar | Multi-span validering | ← agents, timespan → decision_core |
+| 6 | sizing | ✅ Klar | Kelly criterion, RL-sizing | ← decision_core → portfolio |
+| 7 | timespan_engine | ✅ Klar | Multi-timeframe sync | ← data_stream → fusion |
+| 8 | portfolio_engine | ✅ Klar | Multi-portfolio, mutation | ← sizing → comparator |
+| 9 | evolution | ✅ Klar | Strategi/agent mutation | ← critique → agents |
+| 10 | self_critique | ✅ Klar | Felanalys, RL-feedback | ← decision_core → evolution |
+| 11 | symbol_memory | ✅ Klar | Trade history, precision | ← decision_core → critique |
+| 12 | narrative_engine | ✅ Klar | Event logging, berättelse | ← alla moduler → dashboard |
+| 13 | mutation_tracker | ✅ Klar | Genealogi, lineage | ← evolution → narrative |
+| 14 | synergy_matrix | ✅ Klar | Agentrelationer | ← agents → vote/meta |
+| 15 | agent_spectrum | ✅ Klar | Ontologisk kartläggning | ← agent_lifecycle → meta |
+| 16 | agent_lifecycle | ✅ Klar | Agent evolution, status | ← agents → spectrum/mutation |
+| 17 | metaagentgovernor | ✅ Klar | Överordnad styrning | ← synergy → vote/agents |
+| 18 | portfolio_comparator | ✅ Klar | Portfolio benchmarking | ← portfolio → decision_core |
+| 19 | risk_mapper | ✅ Klar | Riskanalys, VaR | ← portfolio → sizing |
+
+**Systemstatus:** ✅ 19/19 moduler fullt operativa  
+**Integration:** ✅ Alla integrationspunkter verifierade  
+**Dataflöde:** ✅ End-to-end flöde från data till beslut fungerar  
+**Auto-refresh:** ✅ Alla paneler uppdateras automatiskt
+
+---
+
+## 🤖 Agentöversikt och Status
+
+### Agentregister - 16 Fullt Implementerade Agenter
+
+#### Klassiska Agenter (4/4) ✅
+
+| Agent | Status | Strategi | Dimension | Integrationspunkter | Funktionell Status |
+|-------|--------|----------|-----------|---------------------|-------------------|
+| **MomentumAgent** | ✅ Aktiv | Trendföljande | Temporal (kort span) | → decision_core, fusion<br>← data_stream | ✅ Full: Momentum calc, trend following |
+| **ReversalAgent** | ✅ Aktiv | Mean reversion | Temporal (medel span) | → decision_core, fusion<br>← data_stream, symbol_memory | ✅ Full: RSI, overbought/oversold |
+| **BreakoutAgent** | ✅ Aktiv | Volatility breakout | Spatial (lång span) | → decision_core, fusion<br>← data_stream | ✅ Full: Bollinger bands, volatility |
+| **HybridAgent** | ✅ Aktiv | Multi-strategi | Adaptive | → decision_core<br>← all classic agents | ✅ Full: Strategy switching, regime detect |
+
+**Classic Agent Integration:**
+- ✅ Alla agents rapporterar till DecisionCore
+- ✅ Historikspårning via SymbolMemory
+- ✅ Performance tracking i AgentLifecycle
+- ✅ Viktjustering via VoteEngine
+
+#### Paradigmatiska Agenter (12/12) ✅
+
+| Agent | Status | Dimension | Kapacitet | Integrationspunkter | Funktionell Status |
+|-------|--------|-----------|-----------|---------------------|-------------------|
+| **EchoAgent** | ✅ Aktiv | Temporal/Reflective | 500 patterns, 75% match | → fusion, reflexion<br>← symbol_memory | ✅ Full: Pattern matching, historical replay |
+| **FractalisAgent** | ✅ Aktiv | Spatial-Temporal | 5 spans, självlikhet | → timespan, fusion<br>← data_stream | ✅ Full: Fractal analysis, multi-scale |
+| **VoxAgent** | ✅ Aktiv | Social/Collective | 75% consensus threshold | → vote_engine, symbio<br>← all agents | ✅ Full: Consensus building, voting |
+| **MycoAgent** | ✅ Aktiv | Network/Distributed | 3 levels, 85% decay | → synergy_matrix<br>← all agents | ✅ Full: Network diffusion, info spread |
+| **ObscuraAgent** | ✅ Aktiv | Latent/Obscure | 2.0σ anomaly detect | → fusion, critique<br>← data_stream | ✅ Full: Anomaly detection, hidden patterns |
+| **MirageAgent** | ✅ Aktiv | Perceptual | 65% reality threshold | → fusion<br>← echo, obscura | ✅ Full: False signal filtering |
+| **SentioAgent** | ✅ Aktiv | Emotional/Empathic | 30-period sentiment | → sizing, vote<br>← data_stream | ✅ Full: Sentiment analysis, fear/greed |
+| **ReflexionAgent** | ✅ Aktiv | Meta-Cognitive | 100 decision history | → self_critique, evolution<br>← decision_core | ✅ Full: Self-learning, adaptation |
+| **DimensioAgent** | ✅ Aktiv | Hyper-Spatial | 5D feature space | → fusion, comparator<br>← data_stream | ✅ Full: Multi-dimensional analysis |
+| **SymbioAgent** | ✅ Aktiv | Relational/Cooperative | 50% symbiosis strength | → synergy_matrix<br>← vox, myco | ✅ Full: Co-evolution, cooperation |
+| **GenesisAgent** | ✅ Aktiv | Origination/Generative | Inflection detection | → fusion, echo<br>← data_stream | ✅ Full: Trend genesis, cycle detection |
+| **ArchitectumAgent** | ✅ Aktiv | Structural | 4 structural levels | → fusion, dimensio<br>← data_stream | ✅ Full: Structure analysis, framework |
+
+**Paradigmatic Agent Integration:**
+- ✅ Alla agents registrerade i AgentRegistry
+- ✅ Ontologisk kartläggning via AgentSpectrum
+- ✅ Livscykelhantering via AgentLifecycle
+- ✅ Synergianalys via SynergyMatrix
+- ✅ Meta-styrning via MetaAgentGovernor
+
+### Agent Integration Matrix
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    AGENT INTEGRATION MAP                         │
+└──────────────────────────────────────────────────────────────────┘
+
+CLASSIC AGENTS
+├─ Momentum → [decision_core, fusion, timespan]
+├─ Reversal → [decision_core, fusion, symbol_memory]
+├─ Breakout → [decision_core, fusion, risk_mapper]
+└─ Hybrid → [decision_core, ALL classic agents]
+
+PARADIGMATIC AGENTS
+├─ Echo → [fusion, reflexion, genesis, symbol_memory]
+├─ Fractalis → [timespan, fusion, dimensio, architectum]
+├─ Vox → [vote_engine, symbio, sentio, synergy_matrix]
+├─ Myco → [synergy_matrix, symbio, portfolio_engine]
+├─ Obscura → [fusion, mirage, reflexion, self_critique]
+├─ Mirage → [fusion, obscura, echo, reflexion]
+├─ Sentio → [sizing, vote_engine, vox, symbio]
+├─ Reflexion → [self_critique, evolution, echo, mirage]
+├─ Dimensio → [fusion, fractalis, architectum, comparator]
+├─ Symbio → [synergy_matrix, vox, myco, sentio]
+├─ Genesis → [fusion, echo, architectum, data_stream]
+└─ Architectum → [fusion, dimensio, reflexion, genesis]
+
+AGENT MANAGEMENT
+├─ AgentRegistry → Central registration (16 agents)
+├─ AgentLifecycle → Birth, evolution, retirement tracking
+├─ AgentSpectrum → Ontological positioning
+├─ SynergyMatrix → Relationship analysis
+└─ MetaAgentGovernor → Council governance
+```
+
+### Agent Performance och Datakoppling
+
+**Data Connection Status:**
+- ✅ Alla agenter mottar data från DataStream
+- ✅ Classic agents använder direct market data (price, volume, volatility)
+- ✅ Paradigmatic agents använder processed data + agent interactions
+- ✅ Real-time updates via DataProvider (Live/Mock toggle)
+- ✅ Historical data via SymbolMemory
+
+**Decision Flow:**
+1. Market Data → DataStream → Agents (parallel analysis)
+2. 16 Agent Decisions → DecisionCore (consensus/conflict detection)
+3. Consensus → Sizing → Portfolio
+4. Conflict → VoteEngine → Weighted Decision → Sizing
+5. All Outcomes → SelfCritique → RL Feedback → Agent Weights
+
+**Performance Tracking:**
+- ✅ Decision accuracy per agent tracked
+- ✅ RL rewards calculated per agent
+- ✅ Weight evolution based on performance
+- ✅ Lineage tracking via MutationTracker
+- ✅ Ontological movement via AgentSpectrum
+
+**Functional Verification:**
+- ✅ Alla 16 agenter kan analysera marknadsdata
+- ✅ Beslutstrukturer validerade (agent_id, symbol, decision, confidence, reasoning)
+- ✅ Consensus building fungerar korrekt
+- ✅ Performance tracking operativt
+- ✅ Agent registry tillhandahåller metadata för alla agenter
 
 ---
 

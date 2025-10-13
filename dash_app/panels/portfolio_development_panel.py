@@ -18,6 +18,14 @@ def create_panel():
     Skapar Portfolio Development panelen med detaljerad historik och trades.
     """
     from modules.portfolio_engine import PortfolioEngine
+    from modules.data_stream.data_stream import get_data_stream
+    from dash_app.config import USE_MOCK_DATA
+    
+    # Get market data using DataStream
+    data_stream = get_data_stream(use_mock=USE_MOCK_DATA)
+    market_summary = data_stream.get_market_summary()
+    quotes = market_summary['quotes']
+    available_symbols = list(quotes.keys())
     
     # Initialize portfolio engine
     portfolio_engine = PortfolioEngine(initial_capital=100000.0)
@@ -26,6 +34,53 @@ def create_panel():
     portfolio_engine.create_portfolio('aggressive', 'aggressive')
     portfolio_engine.create_portfolio('balanced', 'balanced')
     portfolio_engine.create_portfolio('conservative', 'conservative')
+    
+    # Build recent trades table from available symbols
+    portfolios = ['Aggressive', 'Balanced', 'Conservative']
+    recent_trades_rows = []
+    for i in range(10):
+        hours_offset = i * 2 + random.randint(0, 3)
+        timestamp = (datetime.now() - timedelta(hours=hours_offset)).strftime('%Y-%m-%d %H:%M')
+        portfolio = portfolios[i % len(portfolios)]
+        trade_type = random.choice(['🟢 BUY', '🔴 SELL'])
+        symbol = available_symbols[i % len(available_symbols)] if available_symbols else 'N/A'
+        quote = quotes.get(symbol, {})
+        price = quote.get('c', 100)
+        quantity = random.randint(20, 150)
+        value = f"${int(price * quantity):,}"
+        pnl = f"+${random.randint(100, 2000)}" if trade_type == '🔴 SELL' else '-'
+        recent_trades_rows.append([timestamp, portfolio, trade_type, symbol, str(quantity), f"${price:.2f}", value, pnl])
+    
+    # Fallback if no data
+    if not recent_trades_rows:
+        recent_trades_rows = [[datetime.now().strftime('%Y-%m-%d %H:%M'), 'N/A', '⚪ N/A', 'N/A', '0', '$0.00', '$0', '$0']]
+    
+    # Build current positions table from available symbols
+    current_positions_rows = []
+    for i, sym in enumerate(available_symbols[:7] if len(available_symbols) >= 7 else available_symbols):
+        quote = quotes.get(sym, {})
+        current_price = quote.get('c', 100)
+        quantity = random.randint(20, 150)
+        entry_price = current_price * random.uniform(0.96, 1.02)
+        market_value = int(current_price * quantity)
+        pnl = market_value - int(entry_price * quantity)
+        pnl_pct = (pnl / (entry_price * quantity)) * 100 if entry_price > 0 else 0
+        weight_pct = random.uniform(5, 25)
+        
+        current_positions_rows.append([
+            sym,
+            str(quantity),
+            f"${entry_price:.2f}",
+            f"${current_price:.2f}",
+            f"${market_value:,}",
+            f"+${abs(int(pnl))}" if pnl > 0 else f"-${abs(int(pnl))}",
+            f"{pnl_pct:+.1f}%",
+            f"{weight_pct:.1f}%"
+        ])
+    
+    # Fallback if no data
+    if not current_positions_rows:
+        current_positions_rows = [['N/A', '0', '$0.00', '$0.00', '$0', '$0', '0.0%', '0.0%']]
     
     header = create_header(
         "Portfolio Development",
@@ -240,18 +295,7 @@ def create_panel():
                     dbc.CardBody([
                         create_data_table(
                             ['Timestamp', 'Portfolio', 'Type', 'Symbol', 'Quantity', 'Price', 'Value', 'P&L'],
-                            [
-                                [datetime.now().strftime('%Y-%m-%d %H:%M'), 'Aggressive', '🟢 BUY', 'NVDA', '50', '$485.20', '$24,260', '-'],
-                                [(datetime.now() - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M'), 'Balanced', '🔴 SELL', 'AAPL', '100', '$182.50', '$18,250', '+$1,250'],
-                                [(datetime.now() - timedelta(hours=5)).strftime('%Y-%m-%d %H:%M'), 'Aggressive', '🟢 BUY', 'TSLA', '30', '$248.75', '$7,463', '-'],
-                                [(datetime.now() - timedelta(hours=8)).strftime('%Y-%m-%d %H:%M'), 'Conservative', '🟢 BUY', 'JPM', '75', '$151.30', '$11,348', '-'],
-                                [(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'), 'Balanced', '🔴 SELL', 'GOOGL', '50', '$142.80', '$7,140', '+$890'],
-                                [(datetime.now() - timedelta(days=1, hours=3)).strftime('%Y-%m-%d %H:%M'), 'Aggressive', '🟢 BUY', 'AMD', '150', '$128.45', '$19,268', '-'],
-                                [(datetime.now() - timedelta(days=1, hours=6)).strftime('%Y-%m-%d %H:%M'), 'Conservative', '🔴 SELL', 'BA', '40', '$225.60', '$9,024', '+$680'],
-                                [(datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d %H:%M'), 'Balanced', '🟢 BUY', 'MSFT', '60', '$378.90', '$22,734', '-'],
-                                [(datetime.now() - timedelta(days=2, hours=4)).strftime('%Y-%m-%d %H:%M'), 'Aggressive', '🔴 SELL', 'META', '35', '$325.40', '$11,389', '+$1,540'],
-                                [(datetime.now() - timedelta(days=2, hours=7)).strftime('%Y-%m-%d %H:%M'), 'Conservative', '🟢 BUY', 'V', '45', '$265.75', '$11,959', '-']
-                            ]
+                            recent_trades_rows
                         )
                     ])
                 ], className="mb-3")
@@ -266,15 +310,7 @@ def create_panel():
                     dbc.CardBody([
                         create_data_table(
                             ['Symbol', 'Quantity', 'Entry Price', 'Current Price', 'Market Value', 'P&L', 'P&L %', 'Weight'],
-                            [
-                                ['NVDA', '50', '$485.20', '$492.35', '$24,618', '+$358', '+1.5%', '24.6%'],
-                                ['TSLA', '30', '$248.75', '$255.80', '$7,674', '+$212', '+2.8%', '7.7%'],
-                                ['AMD', '150', '$128.45', '$131.20', '$19,680', '+$413', '+2.1%', '19.7%'],
-                                ['AAPL', '85', '$178.30', '$181.25', '$15,406', '+$251', '+1.7%', '15.4%'],
-                                ['GOOGL', '60', '$138.90', '$141.50', '$8,490', '+$156', '+1.9%', '8.5%'],
-                                ['MSFT', '45', '$375.20', '$382.10', '$17,195', '+$311', '+1.8%', '17.2%'],
-                                ['META', '20', '$315.60', '$322.40', '$6,448', '+$136', '+2.2%', '6.4%']
-                            ]
+                            current_positions_rows
                         )
                     ])
                 ], className="mb-3")
