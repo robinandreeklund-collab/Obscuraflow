@@ -219,7 +219,7 @@ class DataOrchestrator:
             return data_stream.get_market_summary()
         
         # Hämta senaste snapshots från REST batcher
-        snapshots = self.rest_batcher.get_all_snapshots()
+        snapshots = self.rest_batcher.get_all_snapshots() if self.rest_batcher else {}
         
         # Beräkna aggregerade metrics
         total_symbols = len(snapshots)
@@ -235,6 +235,77 @@ class DataOrchestrator:
             'avg_change_percent': round(avg_change, 2),
             'quotes': snapshots,
             'timestamp': datetime.now().isoformat()
+        }
+    
+    def get_debug_stats(self) -> Dict[str, Any]:
+        """
+        Hämtar detaljerad debug-statistik för systemet.
+        
+        Returns:
+            Dict med debug-information
+        """
+        if self.use_mock_data:
+            return {
+                'mode': 'mock',
+                'rest_batcher': {'status': 'disabled'},
+                'websocket': {'status': 'disabled', 'connected': False},
+                'symbols': {'total': len(self.symbols), 'active': 0},
+                'uptime': str(datetime.now() - self.stats['start_time']),
+                'message': 'System running in MOCK mode'
+            }
+        
+        # REST Batcher stats
+        rest_stats = {}
+        if self.rest_batcher:
+            rest_stats = {
+                'status': 'running' if self.rest_task and not self.rest_task.done() else 'stopped',
+                'total_calls': self.rest_batcher.stats.get('total_calls', 0),
+                'successful_calls': self.rest_batcher.stats.get('successful_calls', 0),
+                'failed_calls': self.rest_batcher.stats.get('failed_calls', 0),
+                'rate_limited': self.rest_batcher.stats.get('rate_limited_calls', 0),
+                'last_batch_time': self.rest_batcher.stats.get('last_batch_time'),
+                'last_successful_symbol': self.rest_batcher.stats.get('last_successful_symbol'),
+                'cached_symbols': len(self.rest_batcher.snapshot_cache),
+                'batches': len(self.rest_batcher.batches),
+                'batch_size': self.rest_batcher.batch_size,
+                'current_batch': self.rest_batcher.current_batch_index
+            }
+        
+        # WebSocket stats
+        ws_stats = {}
+        if self.ws_handler:
+            ws_stats = {
+                'status': 'running' if self.ws_listen_task and not self.ws_listen_task.done() else 'stopped',
+                'connected': self.ws_handler.is_connected,
+                'active_subscriptions': len(self.ws_handler.active_subscriptions),
+                'subscribed_symbols': list(self.ws_handler.active_subscriptions),
+                'total_ticks': self.ws_handler.stats.get('total_ticks', 0),
+                'subscriptions_added': self.ws_handler.stats.get('subscriptions_added', 0),
+                'subscriptions_removed': self.ws_handler.stats.get('subscriptions_removed', 0),
+                'connection_errors': self.ws_handler.stats.get('connection_errors', 0),
+                'last_tick_time': self.ws_handler.stats.get('last_tick_time'),
+                'last_rotation_time': self.ws_handler.stats.get('last_rotation_time'),
+                'max_subscriptions': self.ws_handler.max_subscriptions
+            }
+        
+        # Trending Pool stats
+        top_symbols = self.trending_pool.get_top_symbols(10)
+        
+        return {
+            'mode': 'live',
+            'rest_batcher': rest_stats,
+            'websocket': ws_stats,
+            'symbols': {
+                'total': len(self.symbols),
+                'active_in_cache': rest_stats.get('cached_symbols', 0),
+                'top_trending': top_symbols
+            },
+            'uptime': str(datetime.now() - self.stats['start_time']),
+            'tasks': {
+                'rest_task': 'running' if self.rest_task and not self.rest_task.done() else 'stopped',
+                'ws_listen_task': 'running' if self.ws_listen_task and not self.ws_listen_task.done() else 'stopped',
+                'ws_rotation_task': 'running' if self.ws_rotation_task and not self.ws_rotation_task.done() else 'stopped'
+            }
         }
     
     def get_symbol_data(self, symbol: str) -> Optional[Dict[str, Any]]:

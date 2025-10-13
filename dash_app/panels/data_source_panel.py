@@ -9,8 +9,11 @@ from dash_app.components.ui_components import create_metric_card, create_data_ta
 import plotly.graph_objs as go
 from datetime import datetime, timedelta
 import random
+import logging
 import sys
 sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
+
+logger = logging.getLogger(__name__)
 
 
 def create_panel():
@@ -30,14 +33,16 @@ def create_panel():
     data_mode = "Mock Data" if USE_MOCK_DATA else "Live API"
     data_status_icon = "🟡" if USE_MOCK_DATA else "🟢"
     
-    # Get stats from orchestrator/data_stream
+    # Get debug stats from data_stream/orchestrator
+    debug_stats = {}
     try:
-        if hasattr(data_stream, 'get_stats'):
-            stream_stats = data_stream.get_stats()
-        else:
-            stream_stats = {}
-    except:
-        stream_stats = {}
+        if hasattr(data_stream, 'orchestrator') and data_stream.orchestrator:
+            debug_stats = data_stream.orchestrator.get_debug_stats()
+        elif hasattr(data_stream, 'get_debug_stats'):
+            debug_stats = data_stream.get_debug_stats()
+    except Exception as e:
+        logger.error(f"Error getting debug stats: {e}")
+        debug_stats = {}
     
     # Build recent API calls table from available symbols with real timestamps
     endpoints = ['/quote', '/quote', '/quote', '/profile2', '/quote', '/candle', '/quote', '/quote']
@@ -123,23 +128,49 @@ def create_panel():
         height=300
     )
     
-    # WebSocket status - try to get real stats if available
-    if not USE_MOCK_DATA and hasattr(data_stream, 'ws_handler'):
-        try:
-            ws_stats = data_stream.ws_handler.get_stats() if hasattr(data_stream.ws_handler, 'get_stats') else {}
-            ws_status = f"🟢 Connected" if ws_stats.get('is_connected', False) else "🔴 Disconnected"
-            ws_subs = ws_stats.get('active_subscriptions', 0)
-            ws_messages = ws_stats.get('total_ticks', 0)
-        except:
-            ws_status = "🟡 Initializing..."
-            ws_subs = 0
-            ws_messages = 0
-    else:
+    # Extract WebSocket and REST stats from debug_stats
+    ws_stats = debug_stats.get('websocket', {})
+    rest_stats = debug_stats.get('rest_batcher', {})
+    symbol_stats = debug_stats.get('symbols', {})
+    task_stats = debug_stats.get('tasks', {})
+    
+    # WebSocket status
+    if debug_stats.get('mode') == 'mock':
         ws_status = "🟡 Mock Mode (Not Connected)"
         ws_subs = 0
+        ws_subscribed_symbols = []
         ws_messages = 0
+        ws_uptime = "N/A"
+        ws_last_tick = "N/A"
+        ws_connection_errors = 0
+    else:
+        ws_connected = ws_stats.get('connected', False)
+        ws_status = "🟢 Connected" if ws_connected else "🔴 Disconnected"
+        ws_subs = ws_stats.get('active_subscriptions', 0)
+        ws_subscribed_symbols = ws_stats.get('subscribed_symbols', [])
+        ws_messages = ws_stats.get('total_ticks', 0)
+        ws_uptime = debug_stats.get('uptime', 'N/A')
+        ws_last_tick = ws_stats.get('last_tick_time') or 'N/A'
+        ws_connection_errors = ws_stats.get('connection_errors', 0)
     
-    ws_uptime = "N/A" if USE_MOCK_DATA else f"{random.randint(1, 5)}h {random.randint(10, 55)}m"
+    # REST Batcher status
+    if debug_stats.get('mode') == 'mock':
+        rest_status = "🟡 Mock Mode (Disabled)"
+        rest_total_calls = 0
+        rest_successful = 0
+        rest_failed = 0
+        rest_rate_limited = 0
+        rest_cached_symbols = 0
+        rest_last_symbol = "N/A"
+    else:
+        rest_running = rest_stats.get('status') == 'running'
+        rest_status = "🟢 Running" if rest_running else "🔴 Stopped"
+        rest_total_calls = rest_stats.get('total_calls', 0)
+        rest_successful = rest_stats.get('successful_calls', 0)
+        rest_failed = rest_stats.get('failed_calls', 0)
+        rest_rate_limited = rest_stats.get('rate_limited', 0)
+        rest_cached_symbols = rest_stats.get('cached_symbols', 0)
+        rest_last_symbol = rest_stats.get('last_successful_symbol', 'N/A')
     
     # API status
     api_status = f"🟢 Active - Live Data" if not USE_MOCK_DATA else "🟡 Mock Data Mode"
@@ -153,15 +184,31 @@ def create_panel():
     total_request_count = sum(request_counts)
     remaining_calls = max(0, 60 - (total_request_count % 60))
     
-    # Generate recent errors based on mode
+    # Generate recent errors based on mode with debug info
     recent_errors = []
-    if not USE_MOCK_DATA:
-        # Live mode might have some rate limit warnings
-        recent_errors.append(f"🟡 [{now.strftime('%H:%M:%S')}] Rate limit approaching ({60-remaining_calls}/60 calls)")
-        if any('429' in row[4] for row in api_calls_rows):
-            recent_errors.append(f"🔴 [{(now - timedelta(seconds=30)).strftime('%H:%M:%S')}] Rate limit exceeded - batching activated")
-        recent_errors.append(f"🟢 [{(now - timedelta(minutes=5)).strftime('%H:%M:%S')}] REST batcher running smoothly")
-        recent_errors.append(f"🟢 [{(now - timedelta(minutes=10)).strftime('%H:%M:%S')}] System started successfully")
+    if debug_stats.get('mode') == 'live':
+        # Show actual task status
+        rest_task_status = task_stats.get('rest_task', 'unknown')
+        ws_listen_status = task_stats.get('ws_listen_task', 'unknown')
+        ws_rotation_status = task_stats.get('ws_rotation_task', 'unknown')
+        
+        recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] REST Task: {rest_task_status}")
+        recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] WS Listen Task: {ws_listen_status}")
+        recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] WS Rotation Task: {ws_rotation_status}")
+        
+        if ws_connection_errors > 0:
+            recent_errors.append(f"🔴 WebSocket connection errors: {ws_connection_errors}")
+        if rest_rate_limited > 0:
+            recent_errors.append(f"🟡 Rate limited calls: {rest_rate_limited}")
+        if rest_failed > 0:
+            recent_errors.append(f"🟡 Failed REST calls: {rest_failed}")
+        
+        # Show last successful operations
+        if rest_last_symbol != "N/A":
+            recent_errors.append(f"🟢 Last successful symbol: {rest_last_symbol}")
+        
+        recent_errors.append(f"📊 Active symbols in cache: {rest_cached_symbols}")
+        recent_errors.append(f"📈 Top trending: {', '.join(symbol_stats.get('top_trending', [])[:5])}")
     else:
         recent_errors.append(f"🟡 [{now.strftime('%H:%M:%S')}] Running in mock data mode")
         recent_errors.append(f"🟢 [{(now - timedelta(seconds=120)).strftime('%H:%M:%S')}] Mock data generator active")
@@ -223,12 +270,20 @@ def create_panel():
                                 ])
                             ], width=12, lg=6),
                             dbc.Col([
-                                html.Div([
+                                    html.Div([
                                     html.H5("Active Subscriptions", style={'color': '#00d9ff'}),
                                     html.Div([
-                                        dbc.Badge(sym, color="success" if not USE_MOCK_DATA else "warning", className="me-2 mb-2")
-                                        for sym in available_symbols[:12]  # Show first 12 symbols
-                                    ] if available_symbols else [html.P("No active subscriptions", style={'color': '#9ca3af'})])
+                                        html.P(f"Total Active: {ws_subs} / {50}", className="mb-2", style={'fontWeight': 'bold'}),
+                                        html.Div([
+                                            dbc.Badge(sym, color="success" if not USE_MOCK_DATA else "warning", className="me-2 mb-2")
+                                            for sym in ws_subscribed_symbols[:12]  # Show first 12 symbols
+                                        ] if ws_subscribed_symbols else [html.P("No active subscriptions", style={'color': '#9ca3af'})])
+                                    ]),
+                                    html.Div([
+                                        html.P(f"Ticks/Messages: {ws_messages:,}", className="mt-3 mb-1"),
+                                        html.P(f"Last Tick: {ws_last_tick}", className="mb-1"),
+                                        html.P(f"Connection Errors: {ws_connection_errors}", className="mb-1")
+                                    ], style={'marginTop': '10px', 'fontSize': '0.9em', 'color': '#9ca3af'})
                                 ])
                             ], width=12, lg=6)
                         ])
@@ -246,24 +301,26 @@ def create_panel():
                         dbc.Row([
                             dbc.Col([
                                 html.Div([
+                                    html.H5("REST Batcher Status", style={'color': '#00d9ff'}),
+                                    html.P(f"Status: {rest_status}", className="mb-2"),
+                                    html.P(f"Total API Calls: {rest_total_calls}", className="mb-2"),
+                                    html.P(f"Successful: {rest_successful}", className="mb-2"),
+                                    html.P(f"Failed: {rest_failed}", className="mb-2"),
+                                    html.P(f"Rate Limited: {rest_rate_limited}", className="mb-2",
+                                          style={'color': '#ef4444' if rest_rate_limited > 0 else '#10b981'}),
+                                    html.P(f"Cached Symbols: {rest_cached_symbols}", className="mb-2"),
+                                    html.P(f"Last Symbol: {rest_last_symbol}", className="mb-2", style={'fontSize': '0.9em', 'color': '#9ca3af'})
+                                ])
+                            ], width=12, lg=6),
+                            dbc.Col([
+                                html.Div([
                                     html.H5("API Configuration", style={'color': '#00d9ff'}),
                                     html.P(f"Status: {api_status}", className="mb-2"),
                                     html.P(f"API Key: {api_key_masked}", className="mb-2"),
                                     html.P(f"Endpoint: https://finnhub.io/api/v1", className="mb-2"),
                                     html.P(f"Rate Limit: 60 calls/min", className="mb-2"),
-                                    html.P(f"Remaining: {remaining_calls} calls", className="mb-2",
-                                          style={'color': '#10b981' if remaining_calls > 30 else '#f59e0b' if remaining_calls > 10 else '#ef4444'})
-                                ])
-                            ], width=12, lg=6),
-                            dbc.Col([
-                                html.Div([
-                                    html.H5("Cache Statistics", style={'color': '#00d9ff'}),
-                                    html.P("Quote Cache TTL: 60 seconds", className="mb-2"),
-                                    html.P("Profile Cache TTL: 3600 seconds", className="mb-2"),
-                                    html.P(f"Cached Items: {len(available_symbols)}", className="mb-2"),
-                                    html.P(f"Cache Size: {len(available_symbols) * 6} KB (est)", className="mb-2"),
-                                    html.P(f"Hit Rate: {cache_hit_rate:.1f}%", className="mb-2",
-                                          style={'color': '#10b981' if cache_hit_rate > 70 else '#f59e0b'})
+                                    html.P(f"Batch Size: {rest_stats.get('batch_size', 10)} symbols", className="mb-2") if rest_stats else None,
+                                    html.P(f"Current Batch: {rest_stats.get('current_batch', 0)}/{rest_stats.get('batches', 0)}", className="mb-2") if rest_stats else None
                                 ])
                             ], width=12, lg=6)
                         ])
