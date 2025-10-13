@@ -327,6 +327,9 @@ def run_tests():
 
 if __name__ == '__main__':
     import sys
-    sys.path.insert(0, '/home/runner/work/Obscuraflow/Obscuraflow')
+    import pathlib
+    # Dynamically add project root to sys.path for portability
+    project_root = pathlib.Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(project_root))
     success = run_tests()
     sys.exit(0 if success else 1)
