@@ -128,26 +128,36 @@ def create_panel():
             
             agent_trade_counts[agent_id] += 1
             
-            # Simulate P&L for executed trades
-            pnl_impact = random.uniform(-5, 15) * size * 10  # Simulated profit/loss
+            # Calculate actual P&L based on price movement (entry price stored in decision metadata)
+            # For BUY: P&L = (current_price - entry_price) * size * 100
+            # For SELL: P&L is realized at execution
+            entry_price_for_pnl = decision_dict.get('metadata', {}).get('entry_price', current_price)
+            actual_current_price = quotes.get(symbol, {}).get('c', current_price)
+            
+            if action == 'BUY':
+                # Calculate unrealized P&L for BUY positions
+                pnl_impact = (actual_current_price - entry_price_for_pnl) * size * 100
+            else:  # SELL
+                # For SELL, P&L is already realized (difference from previous entry)
+                pnl_impact = (entry_price_for_pnl - decision_dict.get('metadata', {}).get('previous_price', entry_price_for_pnl)) * size * 100
+            
             agent_pnl[agent_id] += pnl_impact
             
             # If BUY decision, add to positions
             if action == 'BUY':
-                # Simulate current price movement
+                # Use actual market price from DataStream (no simulation)
                 entry_price = current_price
-                current_sim_price = current_price * random.uniform(0.98, 1.03)
-                unrealized = (current_sim_price - entry_price) * size * 100
+                unrealized = (actual_current_price - entry_price) * size * 100
                 
                 positions_data.append([
                     symbol,
-                    f"${current_sim_price:.2f}",
+                    f"${actual_current_price:.2f}",  # Use actual live price
                     size,
                     f"${entry_price:.2f}",
                     f"${unrealized:+.2f}",
                     agent_id,
                     decision_dict.get('metadata', {}).get('strategy', 'MOMENTUM'),
-                    f"{confidence:.0f}%"
+                    f"${confidence:.0f}%"
                 ])
     
     # Build agent contribution table
@@ -372,14 +382,12 @@ def create_pnl_chart(current_pnl=0.0):
     
     # Simulate gradual accumulation to current P&L
     if current_pnl != 0:
-        # Build up to current P&L with some volatility
+        # Build up to current P&L without noise (market is often closed with static prices)
         pnl_values = []
         for i in range(hours):
             progress = i / hours
             value = current_pnl * progress
-            # Add some realistic volatility
-            noise = random.uniform(-abs(current_pnl) * 0.1, abs(current_pnl) * 0.1)
-            pnl_values.append(value + noise)
+            pnl_values.append(value)
         pnl_values[-1] = current_pnl  # Ensure last value is exactly current P&L
     else:
         pnl_values = [0.0] * hours  # No trading activity yet
