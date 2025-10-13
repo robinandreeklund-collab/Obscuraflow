@@ -186,15 +186,32 @@ def create_panel():
     
     # Generate recent errors based on mode with debug info
     recent_errors = []
+    
+    # Get orchestrator manager status
+    from modules.data_stream.orchestrator_manager import get_global_orchestrator_status
+    orchestrator_status = get_global_orchestrator_status()
+    
     if debug_stats.get('mode') == 'live':
+        # Show orchestrator manager status first
+        if orchestrator_status['running']:
+            recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] Orchestrator Manager: RUNNING (uptime: {orchestrator_status.get('uptime', 'N/A')})")
+        else:
+            status_icon = "🔴" if orchestrator_status.get('error') else "🟡"
+            error_msg = f" - {orchestrator_status.get('error')}" if orchestrator_status.get('error') else ""
+            recent_errors.append(f"{status_icon} [{now.strftime('%H:%M:%S')}] Orchestrator Manager: STOPPED{error_msg}")
+        
         # Show actual task status
         rest_task_status = task_stats.get('rest_task', 'unknown')
         ws_listen_status = task_stats.get('ws_listen_task', 'unknown')
         ws_rotation_status = task_stats.get('ws_rotation_task', 'unknown')
         
-        recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] REST Task: {rest_task_status}")
-        recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] WS Listen Task: {ws_listen_status}")
-        recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] WS Rotation Task: {ws_rotation_status}")
+        rest_icon = "🟢" if rest_task_status == "running" else "🟡"
+        ws_listen_icon = "🟢" if ws_listen_status == "running" else "🟡"
+        ws_rotation_icon = "🟢" if ws_rotation_status == "running" else "🟡"
+        
+        recent_errors.append(f"{rest_icon} [{now.strftime('%H:%M:%S')}] REST Task: {rest_task_status}")
+        recent_errors.append(f"{ws_listen_icon} [{now.strftime('%H:%M:%S')}] WS Listen Task: {ws_listen_status}")
+        recent_errors.append(f"{ws_rotation_icon} [{now.strftime('%H:%M:%S')}] WS Rotation Task: {ws_rotation_status}")
         
         if ws_connection_errors > 0:
             recent_errors.append(f"🔴 WebSocket connection errors: {ws_connection_errors}")
@@ -210,7 +227,12 @@ def create_panel():
         recent_errors.append(f"📊 Active symbols in cache: {rest_cached_symbols}")
         recent_errors.append(f"📈 Top trending: {', '.join(symbol_stats.get('top_trending', [])[:5])}")
     else:
+        # Mock mode
         recent_errors.append(f"🟡 [{now.strftime('%H:%M:%S')}] Running in mock data mode")
+        if orchestrator_status['running']:
+            recent_errors.append(f"⚠️ [{now.strftime('%H:%M:%S')}] Orchestrator unexpectedly running in mock mode")
+        else:
+            recent_errors.append(f"🟢 [{now.strftime('%H:%M:%S')}] Orchestrator properly stopped (mock mode)")
         recent_errors.append(f"🟢 [{(now - timedelta(seconds=120)).strftime('%H:%M:%S')}] Mock data generator active")
         recent_errors.append(f"🟢 [{(now - timedelta(minutes=5)).strftime('%H:%M:%S')}] System started successfully")
     
